@@ -810,4 +810,258 @@
                 this.state = 'running';
                 document.getElementById(`btn-start-${this.id}`).style.display = 'none';
                 document.getElementById(`btn-pause-${this.id}`).style.display = 'block';
-                this.toggleInputs(true); // 실행 중에는 설정
+                this.toggleInputs(true); // 실행 중에는 설정 비활성화
+                this.updateStatus(this.mode === 'focus' ? '🔥 집중 중...' : '☕ 휴식 중...');
+                this.renderCycles();
+                this.timerInterval = setInterval(() => {
+                    if (this.timeLeft > 0) {
+                        this.timeLeft--;
+                        this.updateDisplay();
+                    } else {
+                        this.completePhase();
+                    }
+                }, 1000);
+            }
+
+            pause() {
+                if (this.state !== 'running') return;
+                clearInterval(this.timerInterval);
+                this.state = 'paused';
+                document.getElementById(`btn-start-${this.id}`).innerText = '재개';
+                document.getElementById(`btn-start-${this.id}`).style.display = 'block';
+                document.getElementById(`btn-pause-${this.id}`).style.display = 'none';
+                this.toggleInputs(false); // 일시정지 중에는 설정 활성화
+                this.updateStatus('⏸️ 일시정지');
+                saveSessionData();
+            }
+
+            skipPhase() {
+                clearInterval(this.timerInterval);
+                this.completePhase(true);
+            }
+
+            resetTimer() {
+                clearInterval(this.timerInterval);
+                this.state = 'stopped';
+                this.mode = 'focus';
+                this.currentCycle = 1;
+                this.timeLeft = this.focusTime * 60;
+                this.initialTime = this.timeLeft;
+                document.getElementById(`btn-start-${this.id}`).innerText = '시작';
+                document.getElementById(`btn-start-${this.id}`).style.display = 'block';
+                document.getElementById(`btn-pause-${this.id}`).style.display = 'none';
+                this.toggleInputs(false);
+                this.updateStatus('Ready');
+                this.renderCycles();
+                this.updateDisplay();
+                this.updateTimeSummaryDisplay(); // 남은 시간 업데이트
+                saveSessionData();
+            }
+
+            completePhase(mute = false) {
+                clearInterval(this.timerInterval);
+                if (!mute) playAlarm(); 
+
+                if (this.mode === 'focus') {
+                    // 마지막 사이클 후에는 휴식 없음
+                    if (this.currentCycle === this.totalCycles) {
+                        this.state = 'finished'; 
+                        this.resetTimer();
+                        this.updateStatus('🎉 전체 완료!');
+                        if(!mute) playAlarm(); 
+                        return;
+                    }
+                    this.mode = 'break';
+                    this.timeLeft = this.breakTime * 60;
+                    this.initialTime = this.timeLeft;
+                    this.updateStatus('☕ 휴식 준비');
+                } else { // mode === 'break'
+                    this.mode = 'focus';
+                    this.currentCycle++;
+                    this.timeLeft = this.focusTime * 60;
+                    this.initialTime = this.timeLeft;
+                    this.updateStatus('🔥 집중 준비');
+                }
+                
+                this.renderCycles();
+                this.updateDisplay();
+                this.updateTimeSummaryDisplay(); // 남은 시간 업데이트
+                
+                if (this.autoAdvance) {
+                    this.state = 'stopped';
+                    this.start();
+                } else {
+                    this.state = 'stopped';
+                    document.getElementById(`btn-start-${this.id}`).innerText = '다음 단계 시작';
+                    document.getElementById(`btn-start-${this.id}`).style.display = 'block';
+                    document.getElementById(`btn-pause-${this.id}`).style.display = 'none';
+                    this.toggleInputs(false);
+                }
+            }
+
+            toggleInputs(disabled) {
+                document.getElementById(`input-focus-${this.id}`).disabled = disabled;
+                document.getElementById(`input-break-${this.id}`).disabled = disabled;
+                document.getElementById(`input-cycle-${this.id}`).disabled = disabled;
+                document.getElementById(`check-auto-${this.id}`).disabled = disabled;
+            }
+        }
+
+
+        // ===================================
+        // ⚙️ GLOBAL CONTROLLER LOGIC
+        // ===================================
+        
+        const getSettingsCardHTML = () => {
+            const currentVolume = Math.round(globalVolume * 100);
+            const softSelected = alarmProfile === 'soft' ? 'class="selected"' : '';
+            const mediumSelected = alarmProfile === 'medium' ? 'class="selected"' : '';
+            const loudSelected = alarmProfile === 'loud' ? 'class="selected"' : '';
+            
+            return `
+                <div class="session-card" id="settings-card">
+                    <div class="card-header">
+                        <input type="text" class="session-name" value="Setting" disabled/>
+                        <input type="text" class="session-note" id="setting-note-1" placeholder="설정 관련 메모 (첫 번째 줄)" style="margin-bottom: 0px;">
+                        <input type="text" class="session-note" id="setting-note-2" placeholder="설정 관련 메모 (두 번째 줄)">
+                    </div>
+                    
+                    <div class="status-badge" style="color: var(--setting-color);"></div> 
+                    <div class="cycle-visuals" style="margin-bottom: 20px;"></div>
+
+                    <div class="timer-wrapper">
+                        <div class="time-summary-display" style="font-size: 0.9rem; margin-top: 0;">총 0시간 00분 | 0시간 00분 남음</div>
+                        
+                        <div class="timer-display" style="font-size: 2.5rem; color: var(--setting-color); margin-top: 5px;">⚙️</div>
+                    </div>
+                    
+                    <div class="progress-container">
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" style="width: 100%; background: #ddd;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons full-width" style="margin-top: 5px; margin-bottom: 10px;">
+                        <button id="alarm-test" style="background-color: var(--setting-color); color: white;" class="full-width">테스트 알람 재생</button>
+                    </div>
+
+                    <div class="controls" style="gap: 15px; margin-top: auto; margin-bottom: 0;">
+                        <div class="control-group">
+                            <label>운영할 타이머 개수</label>
+                            <span id="session-count-value">${sessionCount}</span>
+                            <input type="range" id="session-count-slider" min="1" max="10" value="${sessionCount}">
+                        </div>
+
+                        <div class="control-group">
+                            <label>알람 볼륨</label>
+                            <span id="alarm-volume-value">${currentVolume}%</span>
+                            <input type="range" id="alarm-volume-slider" min="0" max="100" value="${currentVolume}">
+                        </div>
+                        
+                        <div style="grid-column: 1 / 3;">
+                            <label style="font-size: 0.9rem; color: var(--gray-text);">알람 종류 선택</label>
+                            <div class="alarm-selector">
+                                <button id="alarm-soft" data-profile="soft" ${softSelected}>작은 소리 🔈</button>
+                                <button id="alarm-medium" data-profile="medium" ${mediumSelected}>중간 소리 🔔</button>
+                                <button id="alarm-loud" data-profile="loud" ${loudSelected}>큰 소리 🔊</button>
+                            </div>
+                        </div>
+                        
+                        <div class="toggle-wrapper" style="margin-top: 15px;">
+                            <span>다크 모드</span>
+                            <input type="checkbox" id="dark-mode-toggle" ${isDarkMode ? 'checked' : ''}>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        function attachGlobalListeners() {
+            const countSlider = document.getElementById('session-count-slider');
+            const countValue = document.getElementById('session-count-value');
+
+            if (!countSlider) return; 
+
+            countSlider.oninput = (e) => {
+                countValue.innerText = e.target.value; 
+            };
+            
+            countSlider.onchange = (e) => {
+                sessionCount = parseInt(e.target.value);
+                playNotificationSound(); 
+                saveGlobalSettings(); 
+                createSessions(); 
+            }
+
+            const volumeSlider = document.getElementById('alarm-volume-slider');
+            const volumeValue = document.getElementById('alarm-volume-value');
+            
+            volumeSlider.oninput = (e) => {
+                globalVolume = parseInt(e.target.value) / 100;
+                volumeValue.innerText = `${e.target.value}%`;
+                saveGlobalSettings(); 
+            };
+            
+            document.querySelectorAll('#settings-card .alarm-selector button[data-profile]').forEach(button => {
+                button.onclick = (e) => {
+                    alarmProfile = e.target.dataset.profile;
+                    playNotificationSound(); 
+                    document.querySelectorAll('#settings-card .alarm-selector button').forEach(btn => btn.classList.remove('selected'));
+                    e.target.classList.add('selected');
+                    saveGlobalSettings(); 
+                };
+            });
+            
+            document.getElementById('dark-mode-toggle').addEventListener('change', (e) => {
+                playNotificationSound();
+                toggleDarkMode(e.target.checked);
+            });
+
+            document.getElementById('alarm-test').onclick = () => {
+                playAlarm();
+                playNotificationSound(); 
+            }
+        }
+
+        function createSessions() {
+            activeSessions.forEach(session => {
+                clearInterval(session.timerInterval);
+            });
+            activeSessions = [];
+            const dashboard = document.getElementById('dashboard');
+            dashboard.innerHTML = ''; 
+
+            const loadedSessions = loadSessionData();
+            
+            for(let i=1; i<=sessionCount; i++) {
+                const loadedData = loadedSessions.find(s => s.id === i) || {};
+                const name = defaultNames[i-1] || `세션 ${i}`;
+                
+                const newSession = new PomodoroSession(i, name, loadedData);
+                activeSessions.push(newSession);
+            }
+            
+            dashboard.insertAdjacentHTML('beforeend', getSettingsCardHTML());
+            
+            attachGlobalListeners(); 
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadGlobalSettings(); 
+            toggleDarkMode(isDarkMode); 
+            
+            if (audioCtx.state === 'suspended') {
+                const resumeAudio = () => {
+                    audioCtx.resume();
+                    document.body.removeEventListener('touchstart', resumeAudio);
+                    document.body.removeEventListener('mousedown', resumeAudio);
+                };
+                document.body.addEventListener('touchstart', resumeAudio, { once: true });
+                document.body.addEventListener('mousedown', resumeAudio, { once: true });
+            }
+            createSessions(); 
+        });
+
+    </script>
+</body>
+</html>
