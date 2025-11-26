@@ -56,7 +56,7 @@
             flex-direction: column;
             border-top: 6px solid var(--focus-color);
             position: relative;
-            min-height: 430px; 
+            min-height: 450px; /* 메모 추가로 최소 높이 약간 증가 */
         }
 
         .session-name { 
@@ -65,9 +65,21 @@
             border: none; 
             border-bottom: 1px solid #ddd; 
             width: 100%; 
-            padding: 5px 0 10px 0; 
+            padding: 5px 0; /* 메모 필드와 간격 조절 */
             outline: none; 
             color: #2d3436; 
+        }
+        
+        /* 메모 필드 스타일 */
+        .session-note { 
+            font-size: 0.9rem; 
+            color: var(--gray-text); 
+            border: none; 
+            border-bottom: 1px solid #eee;
+            width: 100%; 
+            padding: 5px 0; 
+            margin-bottom: 5px; /* 상태 배지와의 간격 조절 */
+            outline: none;
         }
 
         /* Status Badge 마진 감소 */
@@ -113,6 +125,17 @@
             align-items: center;
             margin-bottom: 5px;
         }
+        
+        /* 총 소요 시간 디스플레이 (타이머 위로 이동) */
+        .total-time-display {
+            font-size: 0.8rem; 
+            color: var(--gray-text); 
+            font-weight: 500;
+            text-align: center;
+            margin-bottom: -5px; /* 타이머와 가깝게 */
+            line-height: 1;
+            padding-top: 5px;
+        }
 
         /* Timer Display 폰트 및 마진 감소 */
         .timer-display { 
@@ -127,18 +150,6 @@
         }
         .timer-display.break-mode { color: var(--break-color); }
         
-        /* 총 소요 시간 디스플레이 */
-        .total-time-display {
-            font-size: 0.8rem; 
-            color: var(--gray-text); 
-            font-weight: 500;
-            text-align: center;
-            margin-top: -5px; 
-            line-height: 1;
-            padding-bottom: 5px;
-        }
-
-
         /* Progress Bar 마진 감소 */
         .progress-container { 
             margin-bottom: 10px; 
@@ -259,7 +270,7 @@
         const defaultNames = ['기획', '개발', '디자인', '문서화', '회의', '학습', '운동', '정리', '독서', '기타'];
 
         // ===================================
-        // 💾 LOCAL STORAGE FUNCTIONS (이전과 동일)
+        // 💾 LOCAL STORAGE FUNCTIONS
         // ===================================
 
         function saveGlobalSettings() {
@@ -293,6 +304,7 @@
             const sessionData = activeSessions.map(session => ({
                 id: session.id,
                 name: session.name,
+                note: session.note, /* 메모 필드 데이터 저장 */
                 focusTime: session.focusTime,
                 breakTime: session.breakTime,
                 totalCycles: session.totalCycles,
@@ -316,7 +328,7 @@
         }
         
         // ===================================
-        // ⏲️ TIME UTILITY FUNCTIONS (이전과 동일)
+        // ⏲️ TIME UTILITY FUNCTIONS
         // ===================================
         function formatTotalTime(totalMinutes) {
             if (totalMinutes <= 0) {
@@ -334,7 +346,7 @@
 
 
         // ===================================
-        // 🔊 ALARM SOUND FUNCTIONS (수정: playNotificationSound 추가)
+        // 🔊 ALARM SOUND FUNCTIONS
         // ===================================
 
         const createBeep = (startTime, duration, freq, type, vol) => {
@@ -352,7 +364,7 @@
             oscillator.stop(startTime + duration);
         };
         
-        // 버튼 조작 시 알림음 (globalVolume 무관하게 작은 소리)
+        // 버튼 조작 시 알림음 (고정된 작은 소리)
         function playNotificationSound() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const now = audioCtx.currentTime;
@@ -384,13 +396,14 @@
         }
 
         // ===================================
-        // ⏱️ POMODORO SESSION CLASS (수정: 버튼 클릭 시 알림음 추가)
+        // ⏱️ POMODORO SESSION CLASS
         // ===================================
 
         class PomodoroSession {
             constructor(id, defaultName, loadedData = {}) {
                 this.id = id;
                 this.name = loadedData.name || defaultName || `Session ${id}`;
+                this.note = loadedData.note || ''; /* 메모 필드 초기화 */
                 this.state = 'stopped'; 
                 this.mode = 'focus'; 
                 this.currentCycle = 1;
@@ -427,20 +440,21 @@
             }
 
 
+            // RENDER 메서드: session-note 복구, timer-wrapper 순서 변경
             render() {
                 const container = document.getElementById('dashboard');
                 const html = `
                     <div class="session-card" id="card-${this.id}">
                         <div class="card-header">
                             <input type="text" class="session-name" value="${this.name}">
+                            <input type="text" class="session-note" placeholder="간단한 메모 (예: 집중 목표)" value="${this.note}">
                         </div>
                         
                         <div class="status-badge" id="status-${this.id}">Ready</div>
                         <div class="cycle-visuals" id="cycle-visuals-${this.id}"></div>
                         
                         <div class="timer-wrapper">
-                            <div class="timer-display" id="timer-${this.id}">${(this.focusTime).toString().padStart(2, '0')}:00</div>
-                            <div class="total-time-display" id="total-time-${this.id}"></div>
+                            <div class="total-time-display" id="total-time-${this.id}"></div> <div class="timer-display" id="timer-${this.id}">${(this.focusTime).toString().padStart(2, '0')}:00</div>
                         </div>
                         
                         <div class="progress-container">
@@ -489,12 +503,17 @@
                     callback(e);
                     if (['input-focus', 'input-break', 'input-cycle'].some(idPart => e.target.id.includes(idPart))) {
                         this.updateTotalTimeDisplay();
-                        playNotificationSound(); // 설정 변경 시에도 알림음
+                        playNotificationSound(); 
                     }
                     if (this.state === 'stopped' || e.type === 'change' || e.type === 'input') { 
                         saveSessionData();
                     }
                 };
+                
+                /* 메모 필드 이벤트 리스너 복구 */
+                document.getElementById(`card-${this.id}`).querySelector('.session-note').addEventListener('input', updateAndSave((e) => {
+                    this.note = e.target.value;
+                }));
                 
                 document.getElementById(`card-${this.id}`).querySelector('.session-name').addEventListener('input', updateAndSave((e) => {
                     this.name = e.target.value;
@@ -519,7 +538,7 @@
                     this.autoAdvance = e.target.checked;
                 }));
 
-                // 버튼 이벤트에 알림음 추가
+                // 버튼 이벤트에 알림음 추가 (유지)
                 document.getElementById(`btn-start-${this.id}`).addEventListener('click', () => { 
                     playNotificationSound(); 
                     this.start();
@@ -699,7 +718,7 @@
 
 
         // ===================================
-        // ⚙️ GLOBAL CONTROLLER LOGIC (이전과 동일)
+        // ⚙️ GLOBAL CONTROLLER LOGIC
         // ===================================
         
         const getSettingsCardHTML = () => {
@@ -712,14 +731,15 @@
                 <div class="session-card" id="settings-card">
                     <div class="card-header">
                         <input type="text" class="session-name" value="전역 설정 (Global Settings)" disabled/>
+                        <input type="text" class="session-note" placeholder="설정 카드에서는 메모 비활성화" disabled>
                     </div>
                     
                     <div class="status-badge" style="color: var(--setting-color);">대시보드 관리</div>
                     <div class="cycle-visuals" style="margin-bottom: 20px;"></div>
 
                     <div class="timer-wrapper">
-                        <div class="timer-display" style="font-size: 2.5rem; color: var(--setting-color); margin-top: 5px;">⚙️</div>
                         <div class="total-time-display" style="font-size: 0.9rem; margin-top: 0;">(타이머 개수 조절)</div>
+                        <div class="timer-display" style="font-size: 2.5rem; color: var(--setting-color); margin-top: 5px;">⚙️</div>
                     </div>
                     
                     <div class="progress-container">
@@ -770,7 +790,7 @@
             
             countSlider.onchange = (e) => {
                 sessionCount = parseInt(e.target.value);
-                playNotificationSound(); // 설정 변경 시 알림음
+                playNotificationSound(); 
                 saveGlobalSettings(); 
                 createSessions(); 
             }
@@ -787,7 +807,7 @@
             document.querySelectorAll('#settings-card .alarm-selector button[data-profile]').forEach(button => {
                 button.onclick = (e) => {
                     alarmProfile = e.target.dataset.profile;
-                    playNotificationSound(); // 알람 종류 변경 시 알림음
+                    playNotificationSound(); 
                     document.querySelectorAll('#settings-card .alarm-selector button').forEach(btn => btn.classList.remove('selected'));
                     e.target.classList.add('selected');
                     saveGlobalSettings(); 
@@ -796,7 +816,7 @@
 
             document.getElementById('alarm-test').onclick = () => {
                 playAlarm();
-                playNotificationSound(); // 테스트 버튼 클릭 시 알림음
+                playNotificationSound(); 
             }
         }
 
