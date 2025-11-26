@@ -15,7 +15,7 @@
             --text-color: #333;
             --gray-text: #666;
             --shadow: 0 4px 10px rgba(0,0,0,0.1);
-            --black-bar: #333; /* 검은색 테두리/배경색 기준 */
+            --black-bar: #333;
         }
 
         /* 1. body padding 감소 */
@@ -31,26 +31,15 @@
             min-height: 100vh;
         }
 
-        /* 2. 메인 타이틀 마진 감소 */
-        .main-title-input {
+        /* 2. h1 마진 감소 */
+        h1 { 
             margin-bottom: 10px; /* 20px -> 10px */
             font-weight: 800; 
             color: var(--focus-color); 
             font-size: 2.5rem;
-            text-align: center;
-            border: none;
-            border-bottom: 2px solid var(--focus-color); 
-            background: transparent;
-            outline: none;
-            padding: 5px 10px;
-            width: 300px;
-            max-width: 90%;
-            transition: color 0.3s, border-bottom-color 0.3s;
-        }
-        .main-title-input:focus {
-            border-bottom-color: var(--break-color);
         }
 
+        /* --- Dashboard Layout --- */
         .dashboard {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -95,10 +84,10 @@
             outline: none;
         }
 
-        /* 5. Status Badge 폰트 및 마진 감소 */
+        /* 5. Status Badge 마진 감소 */
         .status-badge { 
             text-align: center; 
-            font-size: 0.8rem; /* 0.85rem -> 0.8rem */
+            font-size: 0.85rem; 
             margin-bottom: 3px; /* 5px -> 3px */
             font-weight: bold; 
             text-transform: uppercase; 
@@ -106,15 +95,15 @@
             min-height: 1.2em; 
         }
         
-        /* 6. Cycle Visuals 마진 및 높이 조정 */
+        /* 6. Cycle Visuals 마진 조정 */
         .cycle-visuals { 
             display: flex; 
             flex-wrap: wrap;
             justify-content: center; 
             gap: 5px; 
-            margin: 5px 0 10px 0; /* 상/하 마진 감소 */
+            margin: 5px 0 10px 0; /* 10px 0 -> 5px 0 10px 0 */
             font-size: 1.2rem; 
-            height: 35px; /* 40px -> 35px */
+            height: 35px;
             align-content: flex-start;
         }
         
@@ -131,30 +120,19 @@
             100% { opacity: 1; transform: scale(1); }
         }
 
-        /* 7. Total Time Display 패딩 감소 */
-        .total-time-display {
-            font-size: 0.95rem;
-            color: var(--gray-text); 
-            font-weight: bold;
-            text-align: center;
-            padding: 5px 0; /* 10px 0 5px 0 -> 5px 0 */
-            border-bottom: 1px dashed #eee;
-            margin-bottom: 3px; /* 5px -> 3px */
-        }
-        
-        /* 8. Timer Display 폰트 및 마진 감소 */
+        /* 7. Timer Display 폰트 및 마진 감소 */
         .timer-display { 
             font-size: 2.8rem; /* 3.2rem -> 2.8rem */
             font-weight: 800; 
             text-align: center; 
-            margin: 3px 0 0 0; /* 5px -> 3px */
+            margin: 5px 0 0 0; /* 10px 0 0 0 -> 5px 0 0 0 */
             font-variant-numeric: tabular-nums; 
             color: var(--focus-color); 
             transition: color 0.3s; 
         }
         .timer-display.break-mode { color: var(--break-color); }
-
-        /* 9. Progress Bar 마진 감소 */
+        
+        /* 8. Progress Bar 마진 감소 */
         .progress-container { 
             margin-bottom: 10px; /* 20px -> 10px */
             height: 6px; 
@@ -177,17 +155,42 @@
             transform-origin: right; 
         }
 
+        /* 9. Buttons 패딩 및 간격 감소 */
+        .action-buttons { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 6px; /* 8px -> 6px */
+            margin-top: 5px; /* 새로 추가 */
+            margin-bottom: 10px; /* 새로 추가 */
+        }
+        .full-width { grid-column: span 2; }
+        button { 
+            padding: 8px; /* 10px -> 8px */
+            border: none; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: opacity 0.2s; 
+            font-size: 0.9rem; 
+        }
+        button:hover { opacity: 0.9; }
+        .btn-start { background-color: var(--focus-color); color: white; }
+        .btn-pause { background-color: #f1c40f; color: white; display: none; }
+        .btn-pass { background-color: var(--skip-color); color: white; }
+        .btn-reset { background-color: #95a5a6; color: white; }
+
+
         /* 10. Controls 패딩 및 마진 감소 */
         .controls { 
             display: flex; 
             flex-direction: column; 
             gap: 10px; /* 12px -> 10px */
-            margin-bottom: 10px; /* 20px -> 10px */
+            margin-bottom: 0px; /* 20px -> 0px */
             background: #f8f9fa; 
             padding: 10px; /* 15px -> 10px */
             border-radius: 8px; 
+            margin-top: auto; /* 하단 고정 역할 */
         }
-        
         .control-group { 
             display: grid; 
             grid-template-columns: 1fr auto; 
@@ -226,28 +229,6 @@
             border-top: 1px solid #eee;
         }
 
-        /* 11. Buttons 패딩 및 간격 감소 */
-        .action-buttons { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 6px; /* 8px -> 6px */
-            margin-top: auto; 
-        }
-        .full-width { grid-column: span 2; }
-        button { 
-            padding: 8px; /* 10px -> 8px */
-            border: none; 
-            border-radius: 8px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            transition: opacity 0.2s; 
-            font-size: 0.9rem; 
-        }
-        button:hover { opacity: 0.9; }
-        .btn-start { background-color: var(--focus-color); color: white; }
-        .btn-pause { background-color: #f1c40f; color: white; display: none; }
-        .btn-pass { background-color: var(--skip-color); color: white; }
-        .btn-reset { background-color: #95a5a6; color: white; }
         
         .alarm-selector { display: flex; gap: 5px; margin-top: 10px; }
         .alarm-selector button { flex: 1; font-size: 0.8rem; padding: 6px; border: 1px solid #ddd; background: #fff; }
@@ -256,7 +237,7 @@
 </head>
 <body>
 
-    <input type="text" id="main-title-input" value="Pomodoro" class="main-title-input">
+    <h1>Pomodoro</h1>
 
     <div class="dashboard" id="dashboard">
     </div>
@@ -268,19 +249,17 @@
         let globalVolume = 0.5;
         let alarmProfile = 'medium';
         let sessionCount = 5;
-        let mainTitle = 'Pomodoro'; 
         const defaultNames = ['기획', '개발', '디자인', '문서화', '회의', '학습', '운동', '정리', '독서', '기타'];
 
         // ===================================
-        // 💾 LOCAL STORAGE FUNCTIONS (유지)
+        // 💾 LOCAL STORAGE FUNCTIONS
         // ===================================
-        
+
         function saveGlobalSettings() {
             const settings = {
                 sessionCount: sessionCount,
                 globalVolume: globalVolume,
-                alarmProfile: alarmProfile,
-                mainTitle: mainTitle
+                alarmProfile: alarmProfile
             };
             try {
                 localStorage.setItem('pomodoroGlobalSettings', JSON.stringify(settings));
@@ -297,7 +276,6 @@
                     sessionCount = settings.sessionCount || 5;
                     globalVolume = settings.globalVolume !== undefined ? settings.globalVolume : 0.5;
                     alarmProfile = settings.alarmProfile || 'medium';
-                    mainTitle = settings.mainTitle || 'Pomodoro';
                 }
             } catch (e) {
                 console.error("Local storage error during global load:", e);
@@ -330,30 +308,9 @@
                 return [];
             }
         }
-        
-        // ===================================
-        // ⏲️ TIME UTILITY FUNCTIONS (유지)
-        // ===================================
-
-        function formatTotalTime(totalMinutes) {
-            if (totalMinutes <= 0) {
-                return '총 0시간 00분';
-            }
-            const hours = Math.floor(totalMinutes / 60);
-            const minutes = totalMinutes % 60;
-            
-            if (hours > 0 && minutes === 0) {
-                return `총 ${hours}시간 00분`;
-            } else if (hours > 0) {
-                return `총 ${hours}시간 ${String(minutes).padStart(2, '0')}분`;
-            } else {
-                return `총 0시간 ${String(minutes).padStart(2, '0')}분`;
-            }
-        }
-
 
         // ===================================
-        // 🔊 ALARM SOUND FUNCTIONS (유지)
+        // 🔊 ALARM SOUND FUNCTIONS
         // ===================================
 
         function playAlarm() {
@@ -416,25 +373,11 @@
                 this.attachEvents();
                 this.updateDisplay();
                 this.renderCycles(); 
-                this.updateTotalTimeDisplay(); 
             }
 
-            calculateTotalTime() {
-                const totalMinutes = (this.focusTime + this.breakTime) * this.totalCycles;
-                return totalMinutes;
-            }
-
-            updateTotalTimeDisplay() {
-                const totalMinutes = this.calculateTotalTime();
-                const formattedTime = formatTotalTime(totalMinutes);
-                
-                const element = document.getElementById(`total-time-${this.id}`);
-                if (element) {
-                    element.innerText = formattedTime;
-                }
-            }
-
-
+            // ***********************************************
+            // RENDER 메서드: controls와 action-buttons 순서 변경
+            // ***********************************************
             render() {
                 const container = document.getElementById('dashboard');
                 const html = `
@@ -445,11 +388,8 @@
                         </div>
                         
                         <div class="status-badge" id="status-${this.id}">Ready</div>
-                        
                         <div class="cycle-visuals" id="cycle-visuals-${this.id}"></div>
                         
-                        <div class="total-time-display" id="total-time-${this.id}"></div>
-
                         <div class="timer-display" id="timer-${this.id}">${(this.focusTime).toString().padStart(2, '0')}:00</div>
                         
                         <div class="progress-container">
@@ -458,6 +398,14 @@
                             </div>
                         </div>
 
+                        <div class="action-buttons">
+                            <button class="btn-start full-width" id="btn-start-${this.id}">시작</button>
+                            <button class="btn-pause full-width" id="btn-pause-${this.id}">일시정지</button>
+                            
+                            <button class="btn-pass" id="btn-pass-${this.id}">PASS ⏭️</button>
+                            <button class="btn-reset" id="btn-reset-${this.id}">리셋 ↺</button>
+                        </div>
+                        
                         <div class="controls">
                             <div class="control-group">
                                 <label>집중 시간 (분)</label>
@@ -480,13 +428,6 @@
                             </div>
                         </div>
 
-                        <div class="action-buttons">
-                            <button class="btn-start full-width" id="btn-start-${this.id}">시작</button>
-                            <button class="btn-pause full-width" id="btn-pause-${this.id}">일시정지</button>
-                            
-                            <button class="btn-pass" id="btn-pass-${this.id}">PASS ⏭️</button>
-                            <button class="btn-reset" id="btn-reset-${this.id}">리셋 ↺</button>
-                        </div>
                     </div>
                 `;
                 container.insertAdjacentHTML('beforeend', html);
@@ -495,7 +436,7 @@
             attachEvents() {
                 const updateAndSave = (callback) => (e) => {
                     callback(e);
-                    if (this.state === 'stopped' || this.mode === 'break' || e.type === 'change' || e.type === 'input') { 
+                    if (this.state === 'stopped' || e.type === 'change' || e.type === 'input') { 
                         saveSessionData();
                     }
                 };
@@ -511,19 +452,16 @@
                     this.focusTime = parseInt(e.target.value);
                     document.getElementById(`val-focus-${this.id}`).innerText = this.focusTime;
                     if (this.state === 'stopped' && this.mode === 'focus') this.resetTimer();
-                    this.updateTotalTimeDisplay(); 
                 }));
                 document.getElementById(`input-break-${this.id}`).addEventListener('input', updateAndSave((e) => {
                     this.breakTime = parseInt(e.target.value);
                     document.getElementById(`val-break-${this.id}`).innerText = this.breakTime;
                     if (this.state === 'stopped' && this.mode === 'break') this.resetTimer();
-                    this.updateTotalTimeDisplay(); 
                 }));
                 document.getElementById(`input-cycle-${this.id}`).addEventListener('input', updateAndSave((e) => {
                     this.totalCycles = parseInt(e.target.value);
                     document.getElementById(`val-cycle-${this.id}`).innerText = this.totalCycles;
                     this.renderCycles();
-                    this.updateTotalTimeDisplay(); 
                 }));
                 document.getElementById(`check-auto-${this.id}`).addEventListener('change', updateAndSave((e) => {
                     this.autoAdvance = e.target.checked;
@@ -541,11 +479,12 @@
                 const total = this.totalCycles;
                 let firstRow, secondRow;
 
+                // 사이클 10개 초과 시 첫 번째 줄에 ceil(total/2)개 배치
                 if (total <= 9) {
                     firstRow = total;
                     secondRow = 0;
                 } else {
-                    firstRow = Math.min(10, Math.ceil(total / 2)); 
+                    firstRow = Math.min(10, Math.ceil(total / 2)); // 10개까지는 꽉 채울 수 있도록 최소 10개 제한
                     secondRow = total - firstRow;
                 }
 
@@ -568,15 +507,6 @@
                 container.innerHTML = html;
             }
 
-            toggleInputs(disabled) {
-                const shouldBeDisabled = disabled && (this.mode === 'focus');
-
-                document.getElementById(`input-focus-${this.id}`).disabled = shouldBeDisabled;
-                document.getElementById(`input-break-${this.id}`).disabled = shouldBeDisabled;
-                document.getElementById(`input-cycle-${this.id}`).disabled = shouldBeDisabled;
-                document.getElementById(`check-auto-${this.id}`).disabled = shouldBeDisabled;
-            }
-            
             updateDisplay() {
                 const minutes = Math.floor(this.timeLeft / 60);
                 const seconds = this.timeLeft % 60;
@@ -612,9 +542,7 @@
                 this.state = 'running';
                 document.getElementById(`btn-start-${this.id}`).style.display = 'none';
                 document.getElementById(`btn-pause-${this.id}`).style.display = 'block';
-                
-                this.toggleInputs(true); 
-
+                this.toggleInputs(true);
                 this.updateStatus(this.mode === 'focus' ? '🔥 집중 중...' : '☕ 휴식 중...');
                 this.renderCycles();
                 this.timerInterval = setInterval(() => {
@@ -634,7 +562,6 @@
                 document.getElementById(`btn-start-${this.id}`).innerText = '재개';
                 document.getElementById(`btn-start-${this.id}`).style.display = 'block';
                 document.getElementById(`btn-pause-${this.id}`).style.display = 'none';
-                this.toggleInputs(false); 
                 this.updateStatus('⏸️ 일시정지');
             }
 
@@ -653,11 +580,11 @@
                 document.getElementById(`btn-start-${this.id}`).innerText = '시작';
                 document.getElementById(`btn-start-${this.id}`).style.display = 'block';
                 document.getElementById(`btn-pause-${this.id}`).style.display = 'none';
-                this.toggleInputs(false); 
+                this.toggleInputs(false);
                 this.updateStatus('Ready');
                 this.renderCycles();
                 this.updateDisplay();
-                saveSessionData(); 
+                saveSessionData();
             }
 
             completePhase(mute = false) {
@@ -685,9 +612,6 @@
                 }
                 this.renderCycles();
                 this.updateDisplay();
-                
-                this.toggleInputs(false); 
-
                 if (this.autoAdvance) {
                     this.state = 'stopped';
                     this.start();
@@ -696,13 +620,21 @@
                     document.getElementById(`btn-start-${this.id}`).innerText = '다음 단계 시작';
                     document.getElementById(`btn-start-${this.id}`).style.display = 'block';
                     document.getElementById(`btn-pause-${this.id}`).style.display = 'none';
+                    this.toggleInputs(false);
                 }
+            }
+
+            toggleInputs(disabled) {
+                document.getElementById(`input-focus-${this.id}`).disabled = disabled;
+                document.getElementById(`input-break-${this.id}`).disabled = disabled;
+                document.getElementById(`input-cycle-${this.id}`).disabled = disabled;
+                document.getElementById(`check-auto-${this.id}`).disabled = disabled;
             }
         }
 
 
         // ===================================
-        // ⚙️ GLOBAL CONTROLLER LOGIC (유지)
+        // ⚙️ GLOBAL CONTROLLER LOGIC
         // ===================================
         
         const getSettingsCardHTML = () => {
@@ -716,12 +648,10 @@
                     <div class="card-header">
                         <input type="text" class="session-name" value="전역 설정 (Global Settings)" disabled/>
                         <input type="text" class="session-note" placeholder="메모는 설정 카드에서는 비활성화" disabled>
-                        
-                        <div class="total-time-display" style="border-bottom: none;"></div> 
                     </div>
                     
                     <div class="status-badge" style="color: var(--setting-color);">대시보드 관리</div>
-                    <div class="cycle-visuals" style="margin-bottom: 10px;"></div>
+                    <div class="cycle-visuals" style="margin-bottom: 20px;"></div>
 
                     <div class="timer-display" style="font-size: 2rem; color: var(--setting-color); margin-top: 5px;">⚙️</div>
                     
@@ -730,8 +660,12 @@
                             <div class="progress-bar-fill" style="width: 100%; background: #ddd;"></div>
                         </div>
                     </div>
+                    
+                    <div class="action-buttons full-width" style="margin-top: 5px; margin-bottom: 10px;">
+                        <button id="alarm-test" style="background-color: var(--setting-color); color: white;" class="full-width">테스트 알람 재생</button>
+                    </div>
 
-                    <div class="controls" style="gap: 15px;">
+                    <div class="controls" style="gap: 15px; margin-top: auto; margin-bottom: 0;">
                         <div class="control-group">
                             <label>운영할 타이머 개수 (1~10)</label>
                             <span id="session-count-value">${sessionCount}</span>
@@ -752,10 +686,6 @@
                                 <button id="alarm-loud" data-profile="loud" ${loudSelected}>큰 소리 🔊</button>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="action-buttons full-width" style="margin-top: auto;">
-                        <button id="alarm-test" style="background-color: var(--setting-color); color: white;" class="full-width">테스트 알람 재생</button>
                     </div>
                 </div>
             `;
@@ -823,15 +753,6 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadGlobalSettings(); 
-            
-            const mainTitleInput = document.getElementById('main-title-input');
-            if (mainTitleInput) {
-                mainTitleInput.value = mainTitle;
-                mainTitleInput.addEventListener('input', (e) => {
-                    mainTitle = e.target.value;
-                    saveGlobalSettings();
-                });
-            }
             
             if (audioCtx.state === 'suspended') {
                 const resumeAudio = () => {
