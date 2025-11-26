@@ -39,8 +39,8 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            background-color: var(--bg-color); /* Variable 적용 */
-            color: var(--text-color); /* Variable 적용 */
+            background-color: var(--bg-color); 
+            color: var(--text-color); 
             margin: 0;
             padding: 10px 10px; 
             display: flex;
@@ -67,10 +67,10 @@
         }
 
         .session-card {
-            background: var(--card-bg); /* Variable 적용 */
+            background: var(--card-bg); 
             border-radius: 15px;
             padding: 15px; 
-            box-shadow: var(--shadow); /* Variable 적용 */
+            box-shadow: var(--shadow); 
             display: flex;
             flex-direction: column;
             border-top: 6px solid var(--focus-color);
@@ -82,7 +82,7 @@
             font-size: 1.1rem; 
             font-weight: bold; 
             border: none; 
-            border-bottom: 1px solid var(--input-border); /* Variable 적용 */
+            border-bottom: 1px solid var(--input-border); 
             width: 100%; 
             padding: 5px 0; 
             outline: none; 
@@ -97,7 +97,7 @@
             border-bottom: 1px solid var(--input-border); 
             width: 100%; 
             padding: 5px 0; 
-            margin-bottom: 5px; 
+            margin-bottom: 5px; /* 기본 간격 */
             outline: none;
             background: transparent; 
         }
@@ -120,7 +120,7 @@
             gap: 5px; 
             margin: 5px 0 10px 0; 
             font-size: 1.2rem; 
-            min-height: 40px; /* 두 줄을 안전하게 수용 */
+            min-height: 40px; 
             height: auto;
             align-content: flex-start;
         }
@@ -391,7 +391,7 @@
         }
 
         // ===================================
-        // ⏲️ TIME UTILITY FUNCTIONS (복구됨)
+        // ⏲️ TIME UTILITY FUNCTIONS
         // ===================================
         function formatTotalTime(totalMinutes) {
             if (totalMinutes <= 0) {
@@ -488,7 +488,7 @@
                 this.attachEvents();
                 this.updateDisplay();
                 this.renderCycles(); 
-                this.updateTotalTimeDisplay(); // **이 함수가 formatTotalTime에 의존**
+                this.updateTotalTimeDisplay(); 
             }
             
             calculateTotalTime() {
@@ -497,7 +497,6 @@
             }
 
             updateTotalTimeDisplay() {
-                // formatTotalTime이 복구되었으므로 정상 작동
                 const totalMinutes = this.calculateTotalTime(); 
                 const formattedTime = formatTotalTime(totalMinutes);
                 
@@ -631,7 +630,6 @@
                 const total = this.totalCycles;
                 let firstRow, secondRow;
 
-                // 10개까지는 한 줄, 11개부터는 두 줄로 나누기
                 if (total <= 10) { 
                     firstRow = total;
                     secondRow = 0;
@@ -640,15 +638,12 @@
                     secondRow = total - firstRow;
                 }
                 
-                // CSS에서 min-height: 40px을 확보했기 때문에 레이아웃이 밀리는 문제는 해결됨.
-                // 10개 이상일 때만 두 줄로 렌더링하도록 함.
 
                 for (let i = 1; i <= total; i++) {
                     const isCurrent = i === this.currentCycle;
                     const isCompleted = i < this.currentCycle;
                     
                     if (i === firstRow + 1 && secondRow > 0) {
-                         // 두 번째 줄 시작점
                          html += '<div style="width: 100%; height: 0; margin-bottom: -5px;"></div>';
                     }
 
@@ -802,15 +797,17 @@
             return `
                 <div class="session-card" id="settings-card">
                     <div class="card-header">
-                        <input type="text" class="session-name" value="전역 설정 (Global Settings)" disabled/>
-                        <input type="text" class="session-note" placeholder="설정 카드에서는 메모 비활성화" disabled>
+                        <input type="text" class="session-name" value="Setting" disabled/>
+                        
+                        <input type="text" class="session-note" id="setting-note-1" placeholder="설정 관련 메모 (첫 번째 줄)" style="margin-bottom: 0px;">
+                        <input type="text" class="session-note" id="setting-note-2" placeholder="설정 관련 메모 (두 번째 줄)">
                     </div>
                     
-                    <div class="status-badge" style="color: var(--setting-color);">대시보드 관리</div>
+                    <div class="status-badge" style="color: var(--setting-color);"></div> 
                     <div class="cycle-visuals" style="margin-bottom: 20px;"></div>
 
                     <div class="timer-wrapper">
-                        <div class="total-time-display" style="font-size: 0.9rem; margin-top: 0;">(타이머 개수 조절)</div>
+                        <div class="total-time-display" style="font-size: 0.9rem; margin-top: 0;"></div>
                         <div class="timer-display" style="font-size: 2.5rem; color: var(--setting-color); margin-top: 5px;">⚙️</div>
                     </div>
                     
@@ -826,7 +823,7 @@
 
                     <div class="controls" style="gap: 15px; margin-top: auto; margin-bottom: 0;">
                         <div class="control-group">
-                            <label>운영할 타이머 개수 (1~10)</label>
+                            <label>운영할 타이머 개수</label>
                             <span id="session-count-value">${sessionCount}</span>
                             <input type="range" id="session-count-slider" min="1" max="10" value="${sessionCount}">
                         </div>
@@ -856,7 +853,9 @@
         };
 
         function attachGlobalListeners() {
-            // 이 함수는 getSettingsCardHTML이 DOM에 삽입된 후에 호출되어야 합니다.
+            // NOTE: 이 부분은 Setting 카드에서 메모를 저장하는 기능이 필요하다면 추가적으로 구현해야 합니다.
+            // 현재는 메모 활성화(입력 가능)까지만 반영했습니다.
+
             const countSlider = document.getElementById('session-count-slider');
             const countValue = document.getElementById('session-count-value');
 
@@ -921,7 +920,6 @@
                 activeSessions.push(newSession);
             }
             
-            // 전역 설정 카드 렌더링 (오류 수정으로 이제 정상 작동)
             dashboard.insertAdjacentHTML('beforeend', getSettingsCardHTML());
             
             attachGlobalListeners(); 
@@ -929,7 +927,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadGlobalSettings(); 
-            toggleDarkMode(isDarkMode); // 로드된 다크 모드 상태를 즉시 적용
+            toggleDarkMode(isDarkMode); 
             
             if (audioCtx.state === 'suspended') {
                 const resumeAudio = () => {
