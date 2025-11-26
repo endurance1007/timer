@@ -18,21 +18,22 @@
             --black-bar: #333; /* 검은색 테두리/배경색 기준 */
         }
 
+        /* 1. body padding 감소 */
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
-            padding: 20px 10px;
+            padding: 10px 10px; /* 20px -> 10px */
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
         }
 
-        /* --- 메인 타이틀 Input 스타일 --- */
+        /* 2. 메인 타이틀 마진 감소 */
         .main-title-input {
-            margin-bottom: 20px; 
+            margin-bottom: 10px; /* 20px -> 10px */
             font-weight: 800; 
             color: var(--focus-color); 
             font-size: 2.5rem;
@@ -50,7 +51,6 @@
             border-bottom-color: var(--break-color);
         }
 
-        /* --- Dashboard Layout --- */
         .dashboard {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -59,17 +59,17 @@
             max-width: 1600px;
         }
 
-        /* --- Session Card Styling --- */
+        /* 3. Session Card 패딩 및 최소 높이 조정 */
         .session-card {
             background: var(--card-bg);
             border-radius: 15px;
-            padding: 20px;
+            padding: 15px; /* 20px -> 15px */
             box-shadow: var(--shadow);
             display: flex;
             flex-direction: column;
             border-top: 6px solid var(--focus-color);
             position: relative;
-            min-height: 480px; 
+            min-height: 450px; /* 480px -> 450px */
         }
 
         .session-name { 
@@ -83,6 +83,7 @@
             color: #2d3436; 
         }
 
+        /* 4. 메모 입력창 마진 감소 */
         .session-note { 
             font-size: 0.9rem; 
             color: var(--gray-text); 
@@ -90,30 +91,30 @@
             border-bottom: 1px solid #eee;
             width: 100%; 
             padding: 5px 0; 
-            margin-bottom: 10px;
+            margin-bottom: 5px; /* 10px -> 5px */
             outline: none;
         }
 
-        /* --- Total Time Display Styling (간격 조정) --- */
-        .total-time-display {
-            font-size: 0.95rem;
-            color: var(--gray-text); 
-            font-weight: bold;
-            text-align: center;
-            padding: 10px 0 5px 0; /* 위쪽 패딩 증가, 아래쪽 패딩 감소 */
-            border-bottom: 1px dashed #eee;
-            margin-bottom: 5px; /* 아래 마진 감소 */
+        /* 5. Status Badge 폰트 및 마진 감소 */
+        .status-badge { 
+            text-align: center; 
+            font-size: 0.8rem; /* 0.85rem -> 0.8rem */
+            margin-bottom: 3px; /* 5px -> 3px */
+            font-weight: bold; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            min-height: 1.2em; 
         }
         
-        /* --- Cycle Visuals (높이 및 마진 조정) --- */
+        /* 6. Cycle Visuals 마진 및 높이 조정 */
         .cycle-visuals { 
             display: flex; 
             flex-wrap: wrap;
             justify-content: center; 
             gap: 5px; 
-            margin: 10px 0 15px 0; /* 아래 마진 증가 */
+            margin: 5px 0 10px 0; /* 상/하 마진 감소 */
             font-size: 1.2rem; 
-            height: 40px; /* 높이 확보 */
+            height: 35px; /* 40px -> 35px */
             align-content: flex-start;
         }
         
@@ -130,21 +131,32 @@
             100% { opacity: 1; transform: scale(1); }
         }
 
-        /* --- Timer & Progress Bar --- */
+        /* 7. Total Time Display 패딩 감소 */
+        .total-time-display {
+            font-size: 0.95rem;
+            color: var(--gray-text); 
+            font-weight: bold;
+            text-align: center;
+            padding: 5px 0; /* 10px 0 5px 0 -> 5px 0 */
+            border-bottom: 1px dashed #eee;
+            margin-bottom: 3px; /* 5px -> 3px */
+        }
+        
+        /* 8. Timer Display 폰트 및 마진 감소 */
         .timer-display { 
-            font-size: 3.2rem; 
+            font-size: 2.8rem; /* 3.2rem -> 2.8rem */
             font-weight: 800; 
             text-align: center; 
-            margin: 5px 0 0 0; /* 총 시간 표기와의 간격 감소 */
+            margin: 3px 0 0 0; /* 5px -> 3px */
             font-variant-numeric: tabular-nums; 
             color: var(--focus-color); 
             transition: color 0.3s; 
         }
         .timer-display.break-mode { color: var(--break-color); }
-        .status-badge { text-align: center; font-size: 0.85rem; margin-bottom: 5px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; min-height: 1.2em; }
-        
+
+        /* 9. Progress Bar 마진 감소 */
         .progress-container { 
-            margin-bottom: 20px;
+            margin-bottom: 10px; /* 20px -> 10px */
             height: 6px; 
             width: 100%;
             overflow: hidden;
@@ -165,21 +177,22 @@
             transform-origin: right; 
         }
 
-        /* --- Controls (유지) --- */
+        /* 10. Controls 패딩 및 마진 감소 */
         .controls { 
             display: flex; 
             flex-direction: column; 
-            gap: 12px; 
-            margin-bottom: 20px; 
+            gap: 10px; /* 12px -> 10px */
+            margin-bottom: 10px; /* 20px -> 10px */
             background: #f8f9fa; 
-            padding: 15px;
+            padding: 10px; /* 15px -> 10px */
             border-radius: 8px; 
         }
+        
         .control-group { 
             display: grid; 
             grid-template-columns: 1fr auto; 
             align-items: center; 
-            gap: 10px;
+            gap: 8px; /* 10px -> 8px */
         }
         .control-group label { 
             grid-column: 1 / 2;
@@ -199,7 +212,7 @@
             width: 100%; 
             cursor: pointer; 
             accent-color: var(--focus-color); 
-            margin-top: 5px;
+            margin-top: 3px; /* 5px -> 3px */
         }
         
         .toggle-wrapper { 
@@ -213,10 +226,23 @@
             border-top: 1px solid #eee;
         }
 
-        /* --- Buttons (유지) --- */
-        .action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; }
+        /* 11. Buttons 패딩 및 간격 감소 */
+        .action-buttons { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 6px; /* 8px -> 6px */
+            margin-top: auto; 
+        }
         .full-width { grid-column: span 2; }
-        button { padding: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: opacity 0.2s; font-size: 0.9rem; }
+        button { 
+            padding: 8px; /* 10px -> 8px */
+            border: none; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: opacity 0.2s; 
+            font-size: 0.9rem; 
+        }
         button:hover { opacity: 0.9; }
         .btn-start { background-color: var(--focus-color); color: white; }
         .btn-pause { background-color: #f1c40f; color: white; display: none; }
@@ -509,20 +535,16 @@
                 document.getElementById(`btn-pass-${this.id}`).addEventListener('click', () => this.skipPhase());
             }
 
-            // NEW: 사이클 표시 로직 수정 (10개부터 두 줄)
             renderCycles() {
                 const container = document.getElementById(`cycle-visuals-${this.id}`);
                 let html = '';
                 const total = this.totalCycles;
                 let firstRow, secondRow;
 
-                // 9개까지는 한 줄, 10개부터 두 줄 (총 20개 Max 기준)
                 if (total <= 9) {
                     firstRow = total;
                     secondRow = 0;
                 } else {
-                    // 10개 이상일 때 반으로 나누거나, 10개/나머지로 나눕니다.
-                    // 최대 20개이므로 10/10 또는 9/11 등이 가능
                     firstRow = Math.min(10, Math.ceil(total / 2)); 
                     secondRow = total - firstRow;
                 }
@@ -532,7 +554,6 @@
                     const isCompleted = i < this.currentCycle;
                     
                     if (i === firstRow + 1 && secondRow > 0) {
-                         // 두 번째 줄 시작 시 줄바꿈
                          html += '<div style="width: 100%; height: 0; margin-bottom: -5px;"></div>';
                     }
 
@@ -548,7 +569,6 @@
             }
 
             toggleInputs(disabled) {
-                // 집중 모드일 때만 잠금 (disabled=true, mode=focus)
                 const shouldBeDisabled = disabled && (this.mode === 'focus');
 
                 document.getElementById(`input-focus-${this.id}`).disabled = shouldBeDisabled;
@@ -556,8 +576,6 @@
                 document.getElementById(`input-cycle-${this.id}`).disabled = shouldBeDisabled;
                 document.getElementById(`check-auto-${this.id}`).disabled = shouldBeDisabled;
             }
-            
-            // (나머지 메서드는 기능상 변경 없음)
             
             updateDisplay() {
                 const minutes = Math.floor(this.timeLeft / 60);
@@ -703,9 +721,9 @@
                     </div>
                     
                     <div class="status-badge" style="color: var(--setting-color);">대시보드 관리</div>
-                    <div class="cycle-visuals" style="margin-bottom: 20px;"></div>
+                    <div class="cycle-visuals" style="margin-bottom: 10px;"></div>
 
-                    <div class="timer-display" style="font-size: 2rem; color: var(--setting-color); margin-top: 10px;">⚙️</div>
+                    <div class="timer-display" style="font-size: 2rem; color: var(--setting-color); margin-top: 5px;">⚙️</div>
                     
                     <div class="progress-container">
                         <div class="progress-bar-bg">
@@ -713,7 +731,7 @@
                         </div>
                     </div>
 
-                    <div class="controls" style="gap: 20px;">
+                    <div class="controls" style="gap: 15px;">
                         <div class="control-group">
                             <label>운영할 타이머 개수 (1~10)</label>
                             <span id="session-count-value">${sessionCount}</span>
