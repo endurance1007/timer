@@ -56,7 +56,7 @@
             flex-direction: column;
             border-top: 6px solid var(--focus-color);
             position: relative;
-            min-height: 430px; /* 추가 압축 */
+            min-height: 430px; 
         }
 
         .session-name { 
@@ -65,7 +65,7 @@
             border: none; 
             border-bottom: 1px solid #ddd; 
             width: 100%; 
-            padding: 5px 0 10px 0; /* 메모 영역 제거 후 하단 패딩 확보 */
+            padding: 5px 0 10px 0; 
             outline: none; 
             color: #2d3436; 
         }
@@ -129,11 +129,11 @@
         
         /* 총 소요 시간 디스플레이 */
         .total-time-display {
-            font-size: 0.8rem; /* 작은 폰트 */
+            font-size: 0.8rem; 
             color: var(--gray-text); 
             font-weight: 500;
             text-align: center;
-            margin-top: -5px; /* 타이머와 가깝게 */
+            margin-top: -5px; 
             line-height: 1;
             padding-bottom: 5px;
         }
@@ -259,7 +259,7 @@
         const defaultNames = ['기획', '개발', '디자인', '문서화', '회의', '학습', '운동', '정리', '독서', '기타'];
 
         // ===================================
-        // 💾 LOCAL STORAGE FUNCTIONS
+        // 💾 LOCAL STORAGE FUNCTIONS (이전과 동일)
         // ===================================
 
         function saveGlobalSettings() {
@@ -316,7 +316,7 @@
         }
         
         // ===================================
-        // ⏲️ TIME UTILITY FUNCTIONS (수정)
+        // ⏲️ TIME UTILITY FUNCTIONS (이전과 동일)
         // ===================================
         function formatTotalTime(totalMinutes) {
             if (totalMinutes <= 0) {
@@ -334,53 +334,63 @@
 
 
         // ===================================
-        // 🔊 ALARM SOUND FUNCTIONS
+        // 🔊 ALARM SOUND FUNCTIONS (수정: playNotificationSound 추가)
         // ===================================
+
+        const createBeep = (startTime, duration, freq, type, vol) => {
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.type = type;
+            oscillator.frequency.value = freq;
+            gainNode.gain.setValueAtTime(vol, startTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start(startTime);
+            oscillator.stop(startTime + duration);
+        };
+        
+        // 버튼 조작 시 알림음 (globalVolume 무관하게 작은 소리)
+        function playNotificationSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const now = audioCtx.currentTime;
+            // 'soft' 알람과 유사, 고정된 볼륨(0.15) 적용
+            createBeep(now, 0.1, 440, 'sine', 0.15); 
+        }
+
 
         function playAlarm() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const now = audioCtx.currentTime;
             
-            const createBeep = (startTime, duration, freq, type, vol) => {
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-
-                oscillator.type = type;
-                oscillator.frequency.value = freq;
-                const effectiveVolume = Math.max(0.01, vol * globalVolume);
-                gainNode.gain.setValueAtTime(effectiveVolume, startTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                oscillator.start(startTime);
-                oscillator.stop(startTime + duration);
-            };
+            // 전역 볼륨이 적용된 크기로 재생
+            const vol = Math.max(0.01, 1.0 * globalVolume);
 
             switch(alarmProfile) {
                 case 'soft':
-                    createBeep(now, 0.2, 440, 'sine', 0.2); 
+                    createBeep(now, 0.2, 440, 'sine', 0.2 * vol); 
                     break;
                 case 'medium':
-                    createBeep(now, 0.1, 880, 'square', 0.5);
-                    createBeep(now + 0.15, 0.1, 880, 'square', 0.5);
-                    createBeep(now + 0.3, 0.3, 1100, 'square', 0.5);
+                    createBeep(now, 0.1, 880, 'square', 0.5 * vol);
+                    createBeep(now + 0.15, 0.1, 880, 'square', 0.5 * vol);
+                    createBeep(now + 0.3, 0.3, 1100, 'square', 0.5 * vol);
                     break;
                 case 'loud':
-                    createBeep(now, 0.5, 1200, 'sawtooth', 1.0); 
+                    createBeep(now, 0.5, 1200, 'sawtooth', 1.0 * vol); 
                     break;
             }
         }
 
         // ===================================
-        // ⏱️ POMODORO SESSION CLASS (수정)
+        // ⏱️ POMODORO SESSION CLASS (수정: 버튼 클릭 시 알림음 추가)
         // ===================================
 
         class PomodoroSession {
             constructor(id, defaultName, loadedData = {}) {
                 this.id = id;
                 this.name = loadedData.name || defaultName || `Session ${id}`;
-                // this.note 제거
                 this.state = 'stopped'; 
                 this.mode = 'focus'; 
                 this.currentCycle = 1;
@@ -397,16 +407,15 @@
                 this.attachEvents();
                 this.updateDisplay();
                 this.renderCycles(); 
-                this.updateTotalTimeDisplay(); // 추가
+                this.updateTotalTimeDisplay(); 
             }
             
-            // 총 소요 시간 계산 메서드 추가
             calculateTotalTime() {
+                // (집중 시간 * 총 사이클 수) + (휴식 시간 * (총 사이클 수 - 1))
                 const totalMinutes = (this.focusTime * this.totalCycles) + (this.breakTime * (this.totalCycles > 0 ? this.totalCycles - 1 : 0));
                 return totalMinutes;
             }
 
-            // 총 소요 시간 표시 업데이트 메서드 추가
             updateTotalTimeDisplay() {
                 const totalMinutes = this.calculateTotalTime();
                 const formattedTime = formatTotalTime(totalMinutes);
@@ -418,14 +427,13 @@
             }
 
 
-            // RENDER 메서드: session-note 제거, timer-wrapper 추가
             render() {
                 const container = document.getElementById('dashboard');
                 const html = `
                     <div class="session-card" id="card-${this.id}">
                         <div class="card-header">
                             <input type="text" class="session-name" value="${this.name}">
-                            </div>
+                        </div>
                         
                         <div class="status-badge" id="status-${this.id}">Ready</div>
                         <div class="cycle-visuals" id="cycle-visuals-${this.id}"></div>
@@ -479,16 +487,15 @@
             attachEvents() {
                 const updateAndSave = (callback) => (e) => {
                     callback(e);
-                    // 설정 변경 시 총 소요 시간 업데이트
                     if (['input-focus', 'input-break', 'input-cycle'].some(idPart => e.target.id.includes(idPart))) {
                         this.updateTotalTimeDisplay();
+                        playNotificationSound(); // 설정 변경 시에도 알림음
                     }
                     if (this.state === 'stopped' || e.type === 'change' || e.type === 'input') { 
                         saveSessionData();
                     }
                 };
                 
-                // .session-note 이벤트 제거
                 document.getElementById(`card-${this.id}`).querySelector('.session-name').addEventListener('input', updateAndSave((e) => {
                     this.name = e.target.value;
                 }));
@@ -512,13 +519,25 @@
                     this.autoAdvance = e.target.checked;
                 }));
 
-                document.getElementById(`btn-start-${this.id}`).addEventListener('click', () => this.start());
-                document.getElementById(`btn-pause-${this.id}`).addEventListener('click', () => this.pause());
-                document.getElementById(`btn-reset-${this.id}`).addEventListener('click', () => this.resetTimer());
-                document.getElementById(`btn-pass-${this.id}`).addEventListener('click', () => this.skipPhase());
+                // 버튼 이벤트에 알림음 추가
+                document.getElementById(`btn-start-${this.id}`).addEventListener('click', () => { 
+                    playNotificationSound(); 
+                    this.start();
+                });
+                document.getElementById(`btn-pause-${this.id}`).addEventListener('click', () => { 
+                    playNotificationSound(); 
+                    this.pause();
+                });
+                document.getElementById(`btn-reset-${this.id}`).addEventListener('click', () => { 
+                    playNotificationSound(); 
+                    this.resetTimer();
+                });
+                document.getElementById(`btn-pass-${this.id}`).addEventListener('click', () => { 
+                    playNotificationSound(); 
+                    this.skipPhase();
+                });
             }
 
-            // ... (renderCycles, updateDisplay, updateStatus, start, pause, skipPhase, resetTimer, completePhase, toggleInputs) 메서드는 이전과 동일합니다.
             
             renderCycles() {
                 const container = document.getElementById(`cycle-visuals-${this.id}`);
@@ -680,7 +699,7 @@
 
 
         // ===================================
-        // ⚙️ GLOBAL CONTROLLER LOGIC
+        // ⚙️ GLOBAL CONTROLLER LOGIC (이전과 동일)
         // ===================================
         
         const getSettingsCardHTML = () => {
@@ -751,6 +770,7 @@
             
             countSlider.onchange = (e) => {
                 sessionCount = parseInt(e.target.value);
+                playNotificationSound(); // 설정 변경 시 알림음
                 saveGlobalSettings(); 
                 createSessions(); 
             }
@@ -767,13 +787,17 @@
             document.querySelectorAll('#settings-card .alarm-selector button[data-profile]').forEach(button => {
                 button.onclick = (e) => {
                     alarmProfile = e.target.dataset.profile;
+                    playNotificationSound(); // 알람 종류 변경 시 알림음
                     document.querySelectorAll('#settings-card .alarm-selector button').forEach(btn => btn.classList.remove('selected'));
                     e.target.classList.add('selected');
                     saveGlobalSettings(); 
                 };
             });
 
-            document.getElementById('alarm-test').onclick = playAlarm;
+            document.getElementById('alarm-test').onclick = () => {
+                playAlarm();
+                playNotificationSound(); // 테스트 버튼 클릭 시 알림음
+            }
         }
 
         function createSessions() {
