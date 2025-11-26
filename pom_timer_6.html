@@ -18,22 +18,20 @@
             --black-bar: #333;
         }
 
-        /* 1. body padding 감소 */
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
-            padding: 10px 10px; /* 20px -> 10px */
+            padding: 10px 10px; 
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
         }
 
-        /* 2. h1 마진 감소 */
         h1 { 
-            margin-bottom: 10px; /* 20px -> 10px */
+            margin-bottom: 10px; 
             font-weight: 800; 
             color: var(--focus-color); 
             font-size: 2.5rem;
@@ -48,17 +46,17 @@
             max-width: 1600px;
         }
 
-        /* 3. Session Card 패딩 및 최소 높이 조정 */
+        /* Session Card 패딩 및 최소 높이 조정 */
         .session-card {
             background: var(--card-bg);
             border-radius: 15px;
-            padding: 15px; /* 20px -> 15px */
+            padding: 15px; 
             box-shadow: var(--shadow);
             display: flex;
             flex-direction: column;
             border-top: 6px solid var(--focus-color);
             position: relative;
-            min-height: 450px; /* 480px -> 450px */
+            min-height: 430px; /* 추가 압축 */
         }
 
         .session-name { 
@@ -67,41 +65,29 @@
             border: none; 
             border-bottom: 1px solid #ddd; 
             width: 100%; 
-            padding: 5px 0; 
+            padding: 5px 0 10px 0; /* 메모 영역 제거 후 하단 패딩 확보 */
             outline: none; 
             color: #2d3436; 
         }
 
-        /* 4. 메모 입력창 마진 감소 */
-        .session-note { 
-            font-size: 0.9rem; 
-            color: var(--gray-text); 
-            border: none; 
-            border-bottom: 1px solid #eee;
-            width: 100%; 
-            padding: 5px 0; 
-            margin-bottom: 5px; /* 10px -> 5px */
-            outline: none;
-        }
-
-        /* 5. Status Badge 마진 감소 */
+        /* Status Badge 마진 감소 */
         .status-badge { 
             text-align: center; 
             font-size: 0.85rem; 
-            margin-bottom: 3px; /* 5px -> 3px */
+            margin-bottom: 3px; 
             font-weight: bold; 
             text-transform: uppercase; 
             letter-spacing: 1px; 
             min-height: 1.2em; 
         }
         
-        /* 6. Cycle Visuals 마진 조정 */
+        /* Cycle Visuals 마진 조정 */
         .cycle-visuals { 
             display: flex; 
             flex-wrap: wrap;
             justify-content: center; 
             gap: 5px; 
-            margin: 5px 0 10px 0; /* 10px 0 -> 5px 0 10px 0 */
+            margin: 5px 0 10px 0; 
             font-size: 1.2rem; 
             height: 35px;
             align-content: flex-start;
@@ -119,22 +105,43 @@
             50% { opacity: 0.7; transform: scale(1.2); }
             100% { opacity: 1; transform: scale(1); }
         }
+        
+        /* 새로운 타이머 wrapper */
+        .timer-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 5px;
+        }
 
-        /* 7. Timer Display 폰트 및 마진 감소 */
+        /* Timer Display 폰트 및 마진 감소 */
         .timer-display { 
-            font-size: 2.8rem; /* 3.2rem -> 2.8rem */
+            font-size: 2.8rem; 
             font-weight: 800; 
             text-align: center; 
-            margin: 5px 0 0 0; /* 10px 0 0 0 -> 5px 0 0 0 */
+            margin: 0; 
             font-variant-numeric: tabular-nums; 
             color: var(--focus-color); 
             transition: color 0.3s; 
+            line-height: 1.2;
         }
         .timer-display.break-mode { color: var(--break-color); }
         
-        /* 8. Progress Bar 마진 감소 */
+        /* 총 소요 시간 디스플레이 */
+        .total-time-display {
+            font-size: 0.8rem; /* 작은 폰트 */
+            color: var(--gray-text); 
+            font-weight: 500;
+            text-align: center;
+            margin-top: -5px; /* 타이머와 가깝게 */
+            line-height: 1;
+            padding-bottom: 5px;
+        }
+
+
+        /* Progress Bar 마진 감소 */
         .progress-container { 
-            margin-bottom: 10px; /* 20px -> 10px */
+            margin-bottom: 10px; 
             height: 6px; 
             width: 100%;
             overflow: hidden;
@@ -155,17 +162,17 @@
             transform-origin: right; 
         }
 
-        /* 9. Buttons 패딩 및 간격 감소 */
+        /* Buttons 패딩 및 간격 감소 */
         .action-buttons { 
             display: grid; 
             grid-template-columns: 1fr 1fr; 
-            gap: 6px; /* 8px -> 6px */
-            margin-top: 5px; /* 새로 추가 */
-            margin-bottom: 10px; /* 새로 추가 */
+            gap: 6px; 
+            margin-top: 5px; 
+            margin-bottom: 10px; 
         }
         .full-width { grid-column: span 2; }
         button { 
-            padding: 8px; /* 10px -> 8px */
+            padding: 8px; 
             border: none; 
             border-radius: 8px; 
             font-weight: bold; 
@@ -180,22 +187,22 @@
         .btn-reset { background-color: #95a5a6; color: white; }
 
 
-        /* 10. Controls 패딩 및 마진 감소 */
+        /* Controls 패딩 및 마진 감소 */
         .controls { 
             display: flex; 
             flex-direction: column; 
-            gap: 10px; /* 12px -> 10px */
-            margin-bottom: 0px; /* 20px -> 0px */
+            gap: 10px; 
+            margin-bottom: 0px; 
             background: #f8f9fa; 
-            padding: 10px; /* 15px -> 10px */
+            padding: 10px; 
             border-radius: 8px; 
-            margin-top: auto; /* 하단 고정 역할 */
+            margin-top: auto; 
         }
         .control-group { 
             display: grid; 
             grid-template-columns: 1fr auto; 
             align-items: center; 
-            gap: 8px; /* 10px -> 8px */
+            gap: 8px; 
         }
         .control-group label { 
             grid-column: 1 / 2;
@@ -215,7 +222,7 @@
             width: 100%; 
             cursor: pointer; 
             accent-color: var(--focus-color); 
-            margin-top: 3px; /* 5px -> 3px */
+            margin-top: 3px; 
         }
         
         .toggle-wrapper { 
@@ -286,7 +293,6 @@
             const sessionData = activeSessions.map(session => ({
                 id: session.id,
                 name: session.name,
-                note: session.note,
                 focusTime: session.focusTime,
                 breakTime: session.breakTime,
                 totalCycles: session.totalCycles,
@@ -308,6 +314,24 @@
                 return [];
             }
         }
+        
+        // ===================================
+        // ⏲️ TIME UTILITY FUNCTIONS (수정)
+        // ===================================
+        function formatTotalTime(totalMinutes) {
+            if (totalMinutes <= 0) {
+                return '총 0시간 00분';
+            }
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            
+            if (hours > 0) {
+                return `총 ${hours}시간 ${String(minutes).padStart(2, '0')}분`;
+            } else {
+                return `총 ${String(minutes).padStart(2, '0')}분`;
+            }
+        }
+
 
         // ===================================
         // 🔊 ALARM SOUND FUNCTIONS
@@ -349,14 +373,14 @@
         }
 
         // ===================================
-        // ⏱️ POMODORO SESSION CLASS
+        // ⏱️ POMODORO SESSION CLASS (수정)
         // ===================================
 
         class PomodoroSession {
             constructor(id, defaultName, loadedData = {}) {
                 this.id = id;
                 this.name = loadedData.name || defaultName || `Session ${id}`;
-                this.note = loadedData.note || '';
+                // this.note 제거
                 this.state = 'stopped'; 
                 this.mode = 'focus'; 
                 this.currentCycle = 1;
@@ -373,24 +397,43 @@
                 this.attachEvents();
                 this.updateDisplay();
                 this.renderCycles(); 
+                this.updateTotalTimeDisplay(); // 추가
+            }
+            
+            // 총 소요 시간 계산 메서드 추가
+            calculateTotalTime() {
+                const totalMinutes = (this.focusTime * this.totalCycles) + (this.breakTime * (this.totalCycles > 0 ? this.totalCycles - 1 : 0));
+                return totalMinutes;
             }
 
-            // ***********************************************
-            // RENDER 메서드: controls와 action-buttons 순서 변경
-            // ***********************************************
+            // 총 소요 시간 표시 업데이트 메서드 추가
+            updateTotalTimeDisplay() {
+                const totalMinutes = this.calculateTotalTime();
+                const formattedTime = formatTotalTime(totalMinutes);
+                
+                const element = document.getElementById(`total-time-${this.id}`);
+                if (element) {
+                    element.innerText = formattedTime;
+                }
+            }
+
+
+            // RENDER 메서드: session-note 제거, timer-wrapper 추가
             render() {
                 const container = document.getElementById('dashboard');
                 const html = `
                     <div class="session-card" id="card-${this.id}">
                         <div class="card-header">
                             <input type="text" class="session-name" value="${this.name}">
-                            <input type="text" class="session-note" placeholder="간단한 메모 (예: 집중 목표)" value="${this.note}">
-                        </div>
+                            </div>
                         
                         <div class="status-badge" id="status-${this.id}">Ready</div>
                         <div class="cycle-visuals" id="cycle-visuals-${this.id}"></div>
                         
-                        <div class="timer-display" id="timer-${this.id}">${(this.focusTime).toString().padStart(2, '0')}:00</div>
+                        <div class="timer-wrapper">
+                            <div class="timer-display" id="timer-${this.id}">${(this.focusTime).toString().padStart(2, '0')}:00</div>
+                            <div class="total-time-display" id="total-time-${this.id}"></div>
+                        </div>
                         
                         <div class="progress-container">
                             <div class="progress-bar-bg">
@@ -436,14 +479,16 @@
             attachEvents() {
                 const updateAndSave = (callback) => (e) => {
                     callback(e);
+                    // 설정 변경 시 총 소요 시간 업데이트
+                    if (['input-focus', 'input-break', 'input-cycle'].some(idPart => e.target.id.includes(idPart))) {
+                        this.updateTotalTimeDisplay();
+                    }
                     if (this.state === 'stopped' || e.type === 'change' || e.type === 'input') { 
                         saveSessionData();
                     }
                 };
                 
-                document.getElementById(`card-${this.id}`).querySelector('.session-note').addEventListener('input', updateAndSave((e) => {
-                    this.note = e.target.value;
-                }));
+                // .session-note 이벤트 제거
                 document.getElementById(`card-${this.id}`).querySelector('.session-name').addEventListener('input', updateAndSave((e) => {
                     this.name = e.target.value;
                 }));
@@ -473,18 +518,19 @@
                 document.getElementById(`btn-pass-${this.id}`).addEventListener('click', () => this.skipPhase());
             }
 
+            // ... (renderCycles, updateDisplay, updateStatus, start, pause, skipPhase, resetTimer, completePhase, toggleInputs) 메서드는 이전과 동일합니다.
+            
             renderCycles() {
                 const container = document.getElementById(`cycle-visuals-${this.id}`);
                 let html = '';
                 const total = this.totalCycles;
                 let firstRow, secondRow;
 
-                // 사이클 10개 초과 시 첫 번째 줄에 ceil(total/2)개 배치
                 if (total <= 9) {
                     firstRow = total;
                     secondRow = 0;
                 } else {
-                    firstRow = Math.min(10, Math.ceil(total / 2)); // 10개까지는 꽉 채울 수 있도록 최소 10개 제한
+                    firstRow = Math.min(10, Math.ceil(total / 2)); 
                     secondRow = total - firstRow;
                 }
 
@@ -647,13 +693,15 @@
                 <div class="session-card" id="settings-card">
                     <div class="card-header">
                         <input type="text" class="session-name" value="전역 설정 (Global Settings)" disabled/>
-                        <input type="text" class="session-note" placeholder="메모는 설정 카드에서는 비활성화" disabled>
                     </div>
                     
                     <div class="status-badge" style="color: var(--setting-color);">대시보드 관리</div>
                     <div class="cycle-visuals" style="margin-bottom: 20px;"></div>
 
-                    <div class="timer-display" style="font-size: 2rem; color: var(--setting-color); margin-top: 5px;">⚙️</div>
+                    <div class="timer-wrapper">
+                        <div class="timer-display" style="font-size: 2.5rem; color: var(--setting-color); margin-top: 5px;">⚙️</div>
+                        <div class="total-time-display" style="font-size: 0.9rem; margin-top: 0;">(타이머 개수 조절)</div>
+                    </div>
                     
                     <div class="progress-container">
                         <div class="progress-bar-bg">
