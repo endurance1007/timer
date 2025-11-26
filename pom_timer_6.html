@@ -147,30 +147,17 @@
             margin-bottom: 5px;
         }
         
-        /* Total Planned Time Display */
-        .total-time-display {
+        /* Combined Time Summary Display */
+        .time-summary-display { 
             font-size: 0.8rem; 
-            color: var(--gray-text); 
+            color: var(--gray-text); /* 요청에 따라 색상 통일 */
             font-weight: 500;
             text-align: center;
             line-height: 1;
             padding-top: 5px;
+            margin-bottom: 5px; /* 타이머와 약간의 간격 */
+            min-height: 1em; /* 콘텐츠가 없을 때 레이아웃 점프 방지 */
         }
-        
-        /* Remaining Time Display (New) */
-        .remaining-time-display {
-            font-size: 0.8rem; 
-            font-weight: bold;
-            text-align: center;
-            line-height: 1;
-            margin-top: 3px; /* 여백 조정 */
-            margin-bottom: -5px; /* 타이머와 가깝게 붙이기 */
-            color: var(--focus-color); /* 포커스 색상으로 강조 */
-        }
-        .timer-display.break-mode + .remaining-time-display {
-            color: var(--break-color); /* 휴식 모드 시 색상 변경 */
-        }
-
 
         .timer-display { 
             font-size: 2.8rem; 
@@ -414,38 +401,41 @@
         // ⏲️ TIME UTILITY FUNCTIONS
         // ===================================
         
-        // 총 계획된 시간 포맷 (입력: 분)
-        function formatTotalDuration(totalMinutes) {
-            if (totalMinutes <= 0) {
-                return '총 0시간 00분';
-            }
+        // 총 시간 / 남은 시간을 포맷하는 단일 함수 (입력: 분, 초)
+        function formatTimeDisplay(totalMinutes, remainingSeconds) {
+            
+            // 1. 총 계획 시간 포맷 (분 단위 입력)
             const hours = Math.floor(totalMinutes / 60);
             const minutes = totalMinutes % 60;
             
-            if (hours > 0) {
-                return `총 ${hours}시간 ${String(minutes).padStart(2, '0')}분`;
-            } else {
-                return `총 ${String(minutes).padStart(2, '0')}분`;
-            }
-        }
-        
-        // 남은 시간 포맷 (입력: 초)
-        function formatRemainingDuration(totalSeconds) {
-            if (totalSeconds <= 0) return '총 0시간 00분 남음';
-            
-            // Math.ceil을 사용하여 남은 시간을 분 단위로 올림 (1초라도 남으면 1분 남은 것으로 표시)
-            const totalMinutes = Math.ceil(totalSeconds / 60); 
-            const hours = Math.floor(totalMinutes / 60);
-            const minutes = totalMinutes % 60;
-            
-            let timeStr = '';
-            if (hours > 0) {
-                timeStr = `${hours}시간 ${String(minutes).padStart(2, '0')}분`;
-            } else {
-                timeStr = `${String(minutes).padStart(2, '0')}분`;
+            let totalTimeStr = '총 0시간 00분';
+            if (totalMinutes > 0) {
+                 if (hours > 0) {
+                    totalTimeStr = `총 ${hours}시간 ${String(minutes).padStart(2, '0')}분`;
+                } else {
+                    totalTimeStr = `총 ${String(minutes).padStart(2, '0')}분`;
+                }
             }
             
-            return `총 ${timeStr} 남음`;
+            // 2. 남은 시간 포맷 (초 단위 입력, 분으로 올림 처리)
+            let remainingTimeStr = '';
+            if (remainingSeconds > 0) {
+                const remainingMinutes = Math.ceil(remainingSeconds / 60);
+                const r_hours = Math.floor(remainingMinutes / 60);
+                const r_minutes = remainingMinutes % 60;
+                
+                let timeStr = '';
+                if (r_hours > 0) {
+                    timeStr = `${r_hours}시간 ${String(r_minutes).padStart(2, '0')}분`;
+                } else {
+                    timeStr = `${String(r_minutes).padStart(2, '0')}분`;
+                }
+                remainingTimeStr = `${timeStr} 남음`;
+            } else {
+                remainingTimeStr = '0시간 00분 남음';
+            }
+            
+            return `${totalTimeStr} | ${remainingTimeStr}`;
         }
 
 
@@ -529,72 +519,72 @@
                 this.attachEvents();
                 this.updateDisplay();
                 this.renderCycles(); 
-                this.updateTotalTimeDisplay(); 
-                this.updateRemainingTimeDisplay(); // New: 초기 남은 시간 표시
+                this.updateTimeSummaryDisplay(); // 총 시간/남은 시간 통합 업데이트
             }
             
-            calculateTotalTime() {
-                const totalMinutes = (this.focusTime * this.totalCycles) + (this.breakTime * (this.totalCycles > 0 ? this.totalCycles - 1 : 0));
+            // 총 계획 시간 계산 (분 단위) - 표준 포모도로: 마지막 휴식은 포함하지 않음
+            calculateTotalTimeInMinutes() {
+                const totalMinutes = (this.focusTime * this.totalCycles) + (this.breakTime * Math.max(0, this.totalCycles - 1));
                 return totalMinutes;
             }
             
-            // New: 남은 시간을 초 단위로 계산
+            // 남은 시간을 초 단위로 계산 (로직 수정: 총 계획 시간과 일치하도록)
             calculateRemainingTimeInSeconds() {
-                let remainingTimeSeconds = 0;
-                const F = this.focusTime * 60; // Focus in seconds
-                const B = this.breakTime * 60; // Break in seconds
+                const F_sec = this.focusTime * 60; 
+                const B_sec = this.breakTime * 60;
                 const C_total = this.totalCycles;
                 const C_current = this.currentCycle;
 
-                if (C_current > C_total || this.state === 'finished') {
+                if (C_current > C_total) { 
                     return 0; // 세션 완료
                 }
-
-                // 1. 현재 단계의 남은 시간 (초)
-                remainingTimeSeconds += this.timeLeft;
-
-                // 2. 현재 사이클의 남은 단계 시간 (휴식 단계만 남았을 경우)
+                
+                let remaining = 0;
+                
+                // A. 현재 단계의 남은 시간 (초)
+                remaining += this.timeLeft;
+                
+                // B. 현재 사이클의 남은 단계 시간 (휴식)
                 if (this.mode === 'focus' && C_current < C_total) {
-                    remainingTimeSeconds += B;
+                    remaining += B_sec; 
+                }
+                
+                // C. 남은 전체 사이클 (Focus + Break) 시간
+                let futureCycles = C_total - C_current;
+                
+                if (futureCycles > 0) {
+                    // 남은 포커스 시간: futureCycles 개 (마지막 사이클 포함)
+                    remaining += futureCycles * F_sec;
+                    
+                    // 남은 휴식 시간: futureCycles - 1 개 (마지막 사이클 이후 휴식은 제외)
+                    remaining += Math.max(0, futureCycles - 1) * B_sec;
                 }
 
-                // 3. 남은 전체 사이클 시간
-                remainingTimeSeconds += (C_total - C_current) * (F + B);
+                // 주의: B와 C의 로직은 A와 중복되지 않아야 하며,
+                // B가 C_current의 브레이크를 책임지고, C는 C_current 이후의 모든 F+B를 책임짐.
+                // 위 로직은 B가 C_current의 브레이크를, C가 C_current 이후의 F+B쌍을 계산하는 방식으로 정합성을 확보함.
 
-                return remainingTimeSeconds;
+                return remaining;
             }
 
 
-            updateTotalTimeDisplay() {
-                const totalMinutes = this.calculateTotalTime(); 
-                const formattedTime = formatTotalDuration(totalMinutes); // 함수 이름 변경 반영
-                
-                const element = document.getElementById(`total-time-${this.id}`);
-                if (element) {
-                    element.innerText = formattedTime;
-                }
-                
-                this.updateRemainingTimeDisplay(); // New: 설정 변경 시 남은 시간도 업데이트
-            }
-            
-            // New: 남은 시간 디스플레이 업데이트
-            updateRemainingTimeDisplay() {
+            // 총 시간 및 남은 시간 디스플레이 업데이트 (통합)
+            updateTimeSummaryDisplay() {
+                const totalMinutes = this.calculateTotalTimeInMinutes(); 
                 const remainingSeconds = this.calculateRemainingTimeInSeconds();
-                const formattedTime = formatRemainingDuration(remainingSeconds);
+                const formattedTime = formatTimeDisplay(totalMinutes, remainingSeconds);
                 
-                const element = document.getElementById(`remaining-time-${this.id}`);
+                const element = document.getElementById(`time-summary-${this.id}`);
                 if (element) {
                     element.innerText = formattedTime;
                     
-                    // 남은 시간이 0이고, 타이머가 멈춰있을 경우 숨겨서 깔끔하게 처리
-                    if (remainingSeconds === 0 && this.state !== 'running') {
-                         element.style.display = 'none';
-                    } else {
-                         element.style.display = 'block';
+                    // 세션 완료 시 숨김 처리
+                    if (totalMinutes === 0 || remainingSeconds === 0 && this.state !== 'running') {
+                        // totalMinutes가 0이면 설정이 0이라는 의미이므로 항상 보임
+                        if (remainingSeconds === 0 && this.state !== 'running' && totalMinutes > 0) {
+                            element.innerText = `총 ${formatTimeDisplay(totalMinutes, 0)}`;
+                        }
                     }
-                    
-                    // 현재 모드에 따라 색상 변경
-                    element.style.color = (this.mode === 'focus' ? 'var(--focus-color)' : 'var(--break-color)');
                 }
             }
 
@@ -612,8 +602,7 @@
                         <div class="cycle-visuals" id="cycle-visuals-${this.id}"></div>
                         
                         <div class="timer-wrapper">
-                            <div class="total-time-display" id="total-time-${this.id}"></div>
-                            <div class="remaining-time-display" id="remaining-time-${this.id}"></div> 
+                            <div class="time-summary-display" id="time-summary-${this.id}"></div>
                             
                             <div class="timer-display" id="timer-${this.id}">${(this.focusTime).toString().padStart(2, '0')}:00</div>
                         </div>
@@ -665,7 +654,7 @@
                     
                     // 설정 변경 시 총 시간 업데이트
                     if (['input-focus', 'input-break', 'input-cycle'].some(idPart => e.target.id.includes(idPart))) {
-                        this.updateTotalTimeDisplay(); 
+                        this.updateTimeSummaryDisplay(); 
                         playNotificationSound(); 
                     }
                     
@@ -794,6 +783,8 @@
                 progress.style.width = `${percent}%`;
 
                 const card = document.getElementById(`card-${this.id}`);
+                
+                // 색상 업데이트: 포커스/브레이크에 따라 타이머 색상 및 프로그레스바, 카드 보더 색상 변경
                 if (this.mode === 'focus') {
                     display.classList.remove('break-mode');
                     progress.style.backgroundColor = 'var(--focus-color)';
@@ -806,7 +797,7 @@
                     document.querySelectorAll(`#cycle-visuals-${this.id} .current`).forEach(el => el.style.color = 'var(--break-color)');
                 }
                 
-                this.updateRemainingTimeDisplay(); // New: 매 초마다 남은 시간 업데이트
+                this.updateTimeSummaryDisplay(); // 매 초마다 남은 시간 업데이트
             }
 
             updateStatus(msg) {
@@ -819,256 +810,4 @@
                 this.state = 'running';
                 document.getElementById(`btn-start-${this.id}`).style.display = 'none';
                 document.getElementById(`btn-pause-${this.id}`).style.display = 'block';
-                this.toggleInputs(true); // 실행 중에는 설정 비활성화
-                this.updateStatus(this.mode === 'focus' ? '🔥 집중 중...' : '☕ 휴식 중...');
-                this.renderCycles();
-                this.timerInterval = setInterval(() => {
-                    if (this.timeLeft > 0) {
-                        this.timeLeft--;
-                        this.updateDisplay();
-                    } else {
-                        this.completePhase();
-                    }
-                }, 1000);
-            }
-
-            pause() {
-                if (this.state !== 'running') return;
-                clearInterval(this.timerInterval);
-                this.state = 'paused';
-                document.getElementById(`btn-start-${this.id}`).innerText = '재개';
-                document.getElementById(`btn-start-${this.id}`).style.display = 'block';
-                document.getElementById(`btn-pause-${this.id}`).style.display = 'none';
-                this.toggleInputs(false); // New: 일시정지 중에는 설정 활성화
-                this.updateStatus('⏸️ 일시정지');
-                saveSessionData();
-            }
-
-            skipPhase() {
-                clearInterval(this.timerInterval);
-                this.completePhase(true);
-            }
-
-            resetTimer() {
-                clearInterval(this.timerInterval);
-                this.state = 'stopped';
-                this.mode = 'focus';
-                this.currentCycle = 1;
-                this.timeLeft = this.focusTime * 60;
-                this.initialTime = this.timeLeft;
-                document.getElementById(`btn-start-${this.id}`).innerText = '시작';
-                document.getElementById(`btn-start-${this.id}`).style.display = 'block';
-                document.getElementById(`btn-pause-${this.id}`).style.display = 'none';
-                this.toggleInputs(false);
-                this.updateStatus('Ready');
-                this.renderCycles();
-                this.updateDisplay();
-                this.updateRemainingTimeDisplay(); // New: 남은 시간 업데이트
-                saveSessionData();
-            }
-
-            completePhase(mute = false) {
-                clearInterval(this.timerInterval);
-                if (!mute) playAlarm(); 
-
-                if (this.mode === 'focus') {
-                    this.mode = 'break';
-                    this.timeLeft = this.breakTime * 60;
-                    this.initialTime = this.timeLeft;
-                    this.updateStatus('☕ 휴식 준비');
-                } else {
-                    if (this.currentCycle < this.totalCycles) {
-                        this.mode = 'focus';
-                        this.currentCycle++;
-                        this.timeLeft = this.focusTime * 60;
-                        this.initialTime = this.timeLeft;
-                        this.updateStatus('🔥 집중 준비');
-                    } else {
-                        this.state = 'finished'; // New state for completion
-                        this.resetTimer();
-                        this.updateStatus('🎉 전체 완료!');
-                        if(!mute) playAlarm(); 
-                        return;
-                    }
-                }
-                this.renderCycles();
-                this.updateDisplay();
-                this.updateRemainingTimeDisplay(); // New: 남은 시간 업데이트
-                if (this.autoAdvance) {
-                    this.state = 'stopped';
-                    this.start();
-                } else {
-                    this.state = 'stopped';
-                    document.getElementById(`btn-start-${this.id}`).innerText = '다음 단계 시작';
-                    document.getElementById(`btn-start-${this.id}`).style.display = 'block';
-                    document.getElementById(`btn-pause-${this.id}`).style.display = 'none';
-                    this.toggleInputs(false);
-                }
-            }
-
-            toggleInputs(disabled) {
-                document.getElementById(`input-focus-${this.id}`).disabled = disabled;
-                document.getElementById(`input-break-${this.id}`).disabled = disabled;
-                document.getElementById(`input-cycle-${this.id}`).disabled = disabled;
-                document.getElementById(`check-auto-${this.id}`).disabled = disabled;
-            }
-        }
-
-
-        // ===================================
-        // ⚙️ GLOBAL CONTROLLER LOGIC
-        // ===================================
-        
-        const getSettingsCardHTML = () => {
-            const currentVolume = Math.round(globalVolume * 100);
-            const softSelected = alarmProfile === 'soft' ? 'class="selected"' : '';
-            const mediumSelected = alarmProfile === 'medium' ? 'class="selected"' : '';
-            const loudSelected = alarmProfile === 'loud' ? 'class="selected"' : '';
-            
-            return `
-                <div class="session-card" id="settings-card">
-                    <div class="card-header">
-                        <input type="text" class="session-name" value="Setting" disabled/>
-                        <input type="text" class="session-note" id="setting-note-1" placeholder="설정 관련 메모 (첫 번째 줄)" style="margin-bottom: 0px;">
-                        <input type="text" class="session-note" id="setting-note-2" placeholder="설정 관련 메모 (두 번째 줄)">
-                    </div>
-                    
-                    <div class="status-badge" style="color: var(--setting-color);"></div> 
-                    <div class="cycle-visuals" style="margin-bottom: 20px;"></div>
-
-                    <div class="timer-wrapper">
-                        <div class="total-time-display" style="font-size: 0.9rem; margin-top: 0;"></div>
-                        <div class="remaining-time-display" style="font-size: 0.9rem; color: var(--setting-color); margin-bottom: 0px; margin-top: 5px;"></div>
-                        <div class="timer-display" style="font-size: 2.5rem; color: var(--setting-color); margin-top: 5px;">⚙️</div>
-                    </div>
-                    
-                    <div class="progress-container">
-                        <div class="progress-bar-bg">
-                            <div class="progress-bar-fill" style="width: 100%; background: #ddd;"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="action-buttons full-width" style="margin-top: 5px; margin-bottom: 10px;">
-                        <button id="alarm-test" style="background-color: var(--setting-color); color: white;" class="full-width">테스트 알람 재생</button>
-                    </div>
-
-                    <div class="controls" style="gap: 15px; margin-top: auto; margin-bottom: 0;">
-                        <div class="control-group">
-                            <label>운영할 타이머 개수</label>
-                            <span id="session-count-value">${sessionCount}</span>
-                            <input type="range" id="session-count-slider" min="1" max="10" value="${sessionCount}">
-                        </div>
-
-                        <div class="control-group">
-                            <label>알람 볼륨</label>
-                            <span id="alarm-volume-value">${currentVolume}%</span>
-                            <input type="range" id="alarm-volume-slider" min="0" max="100" value="${currentVolume}">
-                        </div>
-                        
-                        <div style="grid-column: 1 / 3;">
-                            <label style="font-size: 0.9rem; color: var(--gray-text);">알람 종류 선택</label>
-                            <div class="alarm-selector">
-                                <button id="alarm-soft" data-profile="soft" ${softSelected}>작은 소리 🔈</button>
-                                <button id="alarm-medium" data-profile="medium" ${mediumSelected}>중간 소리 🔔</button>
-                                <button id="alarm-loud" data-profile="loud" ${loudSelected}>큰 소리 🔊</button>
-                            </div>
-                        </div>
-                        
-                        <div class="toggle-wrapper" style="margin-top: 15px;">
-                            <span>다크 모드</span>
-                            <input type="checkbox" id="dark-mode-toggle" ${isDarkMode ? 'checked' : ''}>
-                        </div>
-                    </div>
-                </div>
-            `;
-        };
-
-        function attachGlobalListeners() {
-            const countSlider = document.getElementById('session-count-slider');
-            const countValue = document.getElementById('session-count-value');
-
-            if (!countSlider) return; 
-
-            countSlider.oninput = (e) => {
-                countValue.innerText = e.target.value; 
-            };
-            
-            countSlider.onchange = (e) => {
-                sessionCount = parseInt(e.target.value);
-                playNotificationSound(); 
-                saveGlobalSettings(); 
-                createSessions(); 
-            }
-
-            const volumeSlider = document.getElementById('alarm-volume-slider');
-            const volumeValue = document.getElementById('alarm-volume-value');
-            
-            volumeSlider.oninput = (e) => {
-                globalVolume = parseInt(e.target.value) / 100;
-                volumeValue.innerText = `${e.target.value}%`;
-                saveGlobalSettings(); 
-            };
-            
-            document.querySelectorAll('#settings-card .alarm-selector button[data-profile]').forEach(button => {
-                button.onclick = (e) => {
-                    alarmProfile = e.target.dataset.profile;
-                    playNotificationSound(); 
-                    document.querySelectorAll('#settings-card .alarm-selector button').forEach(btn => btn.classList.remove('selected'));
-                    e.target.classList.add('selected');
-                    saveGlobalSettings(); 
-                };
-            });
-            
-            document.getElementById('dark-mode-toggle').addEventListener('change', (e) => {
-                playNotificationSound();
-                toggleDarkMode(e.target.checked);
-            });
-
-            document.getElementById('alarm-test').onclick = () => {
-                playAlarm();
-                playNotificationSound(); 
-            }
-        }
-
-        function createSessions() {
-            activeSessions.forEach(session => {
-                clearInterval(session.timerInterval);
-            });
-            activeSessions = [];
-            const dashboard = document.getElementById('dashboard');
-            dashboard.innerHTML = ''; 
-
-            const loadedSessions = loadSessionData();
-            
-            for(let i=1; i<=sessionCount; i++) {
-                const loadedData = loadedSessions.find(s => s.id === i) || {};
-                const name = defaultNames[i-1] || `세션 ${i}`;
-                
-                const newSession = new PomodoroSession(i, name, loadedData);
-                activeSessions.push(newSession);
-            }
-            
-            dashboard.insertAdjacentHTML('beforeend', getSettingsCardHTML());
-            
-            attachGlobalListeners(); 
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            loadGlobalSettings(); 
-            toggleDarkMode(isDarkMode); 
-            
-            if (audioCtx.state === 'suspended') {
-                const resumeAudio = () => {
-                    audioCtx.resume();
-                    document.body.removeEventListener('touchstart', resumeAudio);
-                    document.body.removeEventListener('mousedown', resumeAudio);
-                };
-                document.body.addEventListener('touchstart', resumeAudio, { once: true });
-                document.body.addEventListener('mousedown', resumeAudio, { once: true });
-            }
-            createSessions(); 
-        });
-
-    </script>
-</body>
-</html>
+                this.toggleInputs(true); // 실행 중에는 설정
