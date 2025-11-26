@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pomodoro</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --focus-color: #ff6b6b;
+            --break-color: #4ecdc4;
+            --skip-color: #a29bfe;
+            --setting-color: #00b894;
+            --text-color: #333;
+            --gray-text: #666;
+            --shadow: 0 4px 10px rgba(0,0,0,0.1);
+            --black-bar: #333; /* 검은색 테두리/배경색 기준 */
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* --- 메인 타이틀 Input 스타일 --- */
+        .main-title-input {
+            margin-bottom: 20px; 
+            font-weight: 800; 
+            color: var(--focus-color); 
+            font-size: 2.5rem;
+            text-align: center;
+            border: none;
+            border-bottom: 2px solid var(--focus-color); 
+            background: transparent;
+            outline: none;
+            padding: 5px 10px;
+            width: 300px;
+            max-width: 90%;
+            transition: color 0.3s, border-bottom-color 0.3s;
+        }
+        .main-title-input:focus {
+            border-bottom-color: var(--break-color);
+        }
+
+        /* --- Dashboard Layout --- */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1600px;
+        }
+
+        /* --- Session Card Styling --- */
+        .session-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            border-top: 6px solid var(--focus-color);
+            position: relative;
+            min-height: 480px; 
+        }
+
+        .session-name { 
+            font-size: 1.1rem; 
+            font-weight: bold; 
+            border: none; 
+            border-bottom: 1px solid #ddd; 
+            width: 100%; 
+            padding: 5px 0; 
+            outline: none; 
+            color: #2d3436; 
+        }
+
+        .session-note { 
+            font-size: 0.9rem; 
+            color: var(--gray-text); 
+            border: none; 
+            border-bottom: 1px solid #eee;
+            width: 100%; 
+            padding: 5px 0; 
+            margin-bottom: 10px;
+            outline: none;
+        }
+
+        /* --- Total Time Display Styling (간격 조정) --- */
+        .total-time-display {
+            font-size: 0.95rem;
+            color: var(--gray-text); 
+            font-weight: bold;
+            text-align: center;
+            padding: 10px 0 5px 0; /* 위쪽 패딩 증가, 아래쪽 패딩 감소 */
+            border-bottom: 1px dashed #eee;
+            margin-bottom: 5px; /* 아래 마진 감소 */
+        }
+        
+        /* --- Cycle Visuals (높이 및 마진 조정) --- */
+        .cycle-visuals { 
+            display: flex; 
+            flex-wrap: wrap;
+            justify-content: center; 
+            gap: 5px; 
+            margin: 10px 0 15px 0; /* 아래 마진 증가 */
+            font-size: 1.2rem; 
+            height: 40px; /* 높이 확보 */
+            align-content: flex-start;
+        }
+        
+        .cycle-dot {
+            text-shadow: 0 0 1px var(--black-bar), 0 0 1px var(--black-bar);
+        }
+        .cycle-dot.completed { color: var(--gray-text); }
+        .cycle-dot.current { color: var(--focus-color); animation: pulse 2s infinite; }
+        .cycle-dot.future { color: #dfe6e9; }
+        
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.2); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        /* --- Timer & Progress Bar --- */
+        .timer-display { 
+            font-size: 3.2rem; 
+            font-weight: 800; 
+            text-align: center; 
+            margin: 5px 0 0 0; /* 총 시간 표기와의 간격 감소 */
+            font-variant-numeric: tabular-nums; 
+            color: var(--focus-color); 
+            transition: color 0.3s; 
+        }
+        .timer-display.break-mode { color: var(--break-color); }
+        .status-badge { text-align: center; font-size: 0.85rem; margin-bottom: 5px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; min-height: 1.2em; }
+        
+        .progress-container { 
+            margin-bottom: 20px;
+            height: 6px; 
+            width: 100%;
+            overflow: hidden;
+        }
+        .progress-bar-bg { 
+            position: relative;
+            width: 100%; 
+            height: 6px; 
+            background: var(--black-bar);
+            border-radius: 3px;
+        }
+        .progress-bar-fill { 
+            height: 100%; 
+            background: var(--focus-color); 
+            width: 100%; 
+            transition: width 1s linear, background-color 0.3s; 
+            border-radius: 3px;
+            transform-origin: right; 
+        }
+
+        /* --- Controls (유지) --- */
+        .controls { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            margin-bottom: 20px; 
+            background: #f8f9fa; 
+            padding: 15px;
+            border-radius: 8px; 
+        }
+        .control-group { 
+            display: grid; 
+            grid-template-columns: 1fr auto; 
+            align-items: center; 
+            gap: 10px;
+        }
+        .control-group label { 
+            grid-column: 1 / 2;
+            font-size: 0.9rem; 
+            color: var(--gray-text); 
+            justify-self: start;
+        }
+        .control-group span { 
+            grid-column: 2 / 3;
+            font-weight: bold;
+            font-variant-numeric: tabular-nums;
+            width: 30px;
+            text-align: right;
+        }
+        input[type=range] { 
+            grid-column: 1 / 3;
+            width: 100%; 
+            cursor: pointer; 
+            accent-color: var(--focus-color); 
+            margin-top: 5px;
+        }
+        
+        .toggle-wrapper { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            font-size: 0.9rem; 
+            color: var(--gray-text); 
+            margin-top: 5px; 
+            padding-top: 5px;
+            border-top: 1px solid #eee;
+        }
+
+        /* --- Buttons (유지) --- */
+        .action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; }
+        .full-width { grid-column: span 2; }
+        button { padding: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: opacity 0.2s; font-size: 0.9rem; }
+        button:hover { opacity: 0.9; }
+        .btn-start { background-color: var(--focus-color); color: white; }
+        .btn-pause { background-color: #f1c40f; color: white; display: none; }
+        .btn-pass { background-color: var(--skip-color); color: white; }
+        .btn-reset { background-color: #95a5a6; color: white; }
+        
+        .alarm-selector { display: flex; gap: 5px; margin-top: 10px; }
+        .alarm-selector button { flex: 1; font-size: 0.8rem; padding: 6px; border: 1px solid #ddd; background: #fff; }
+        .alarm-selector button.selected { background: var(--setting-color); color: white; border-color: var(--setting-color); }
+    </style>
+</head>
+<body>
+
+    <input type="text" id="main-title-input" value="Pomodoro" class="main-title-input">
+
+    <div class="dashboard" id="dashboard">
+    </div>
+
+    <script>
+        // --- Global State & Configuration ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let activeSessions = [];
+        let globalVolume = 0.5;
+        let alarmProfile = 'medium';
+        let sessionCount = 5;
+        let mainTitle = 'Pomodoro'; 
+        const defaultNames = ['기획', '개발', '디자인', '문서화', '회의', '학습', '운동', '정리', '독서', '기타'];
+
+        // ===================================
+        // 💾 LOCAL STORAGE FUNCTIONS (유지)
+        // ===================================
+        
+        function saveGlobalSettings() {
+            const settings = {
+                sessionCount: sessionCount,
+                globalVolume: globalVolume,
+                alarmProfile: alarmProfile,
+                mainTitle: mainTitle
+            };
+            try {
+                localStorage.setItem('pomodoroGlobalSettings', JSON.stringify(settings));
+            } catch (e) {
+                console.error("Local storage error during global save:", e);
+            }
+        }
+
+        function loadGlobalSettings() {
+            try {
+                const data = localStorage.getItem('pomodoroGlobalSettings');
+                if (data) {
+                    const settings = JSON.parse(data);
+                    sessionCount = settings.sessionCount || 5;
+                    globalVolume = settings.globalVolume !== undefined ? settings.globalVolume : 0.5;
+                    alarmProfile = settings.alarmProfile || 'medium';
+                    mainTitle = settings.mainTitle || 'Pomodoro';
+                }
+            } catch (e) {
+                console.error("Local storage error during global load:", e);
+            }
+        }
+
+        function saveSessionData() {
+            const sessionData = activeSessions.map(session => ({
+                id: session.id,
+                name: session.name,
+                note: session.note,
+                focusTime: session.focusTime,
+                breakTime: session.breakTime,
+                totalCycles: session.totalCycles,
+                autoAdvance: session.autoAdvance
+            }));
+            try {
+                localStorage.setItem('pomodoroSessionData', JSON.stringify(sessionData));
+            } catch (e) {
+                console.error("Local storage error during session save:", e);
+            }
+        }
+
+        function loadSessionData() {
+            try {
+                const data = localStorage.getItem('pomodoroSessionData');
+                return data ? JSON.parse(data) : [];
+            } catch (e) {
+                console.error("Local storage error during session load:", e);
+                return [];
+            }
+        }
+        
+        // ===================================
+        // ⏲️ TIME UTILITY FUNCTIONS (유지)
+        // ===================================
+
+        function formatTotalTime(totalMinutes) {
+            if (totalMinutes <= 0) {
+                return '총 0시간 00분';
+            }
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            
+            if (hours > 0 && minutes === 0) {
+                return `총 ${hours}시간 00분`;
+            } else if (hours > 0) {
+                return `총 ${hours}시간 ${String(minutes).padStart(2, '0')}분`;
+            } else {
+                return `총 0시간 ${String(minutes).padStart(2, '0')}분`;
+            }
+        }
+
+
+        // ===================================
+        // 🔊 ALARM SOUND FUNCTIONS (유지)
+        // ===================================
+
+        function playAlarm() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const now = audioCtx.currentTime;
+            
+            const createBeep = (startTime, duration, freq, type, vol) => {
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.type = type;
+                oscillator.frequency.value = freq;
+                const effectiveVolume = Math.max(0.01, vol * globalVolume);
+                gainNode.gain.setValueAtTime(effectiveVolume, startTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.start(startTime);
+                oscillator.stop(startTime + duration);
+            };
+
+            switch(alarmProfile) {
+                case 'soft':
+                    createBeep(now, 0.2, 440, 'sine', 0.2); 
+                    break;
+                case 'medium':
+                    createBeep(now, 0.1, 880, 'square', 0.5);
+                    createBeep(now + 0.15, 0.1, 880, 'square', 0.5);
+                    createBeep(now + 0.3, 0.3, 1100, 'square', 0.5);
+                    break;
+                case 'loud':
+                    createBeep(now, 0.5, 1200, 'sawtooth', 1.0); 
+                    break;
+            }
+        }
+
+        // ===================================
+        // ⏱️ POMODORO SESSION CLASS
+        // ===================================
+
+        class PomodoroSession {
+            constructor(id, defaultName, loadedData = {}) {
+                this.id = id;
+                this.name = loadedData.name || defaultName || `Session ${id}`;
+                this.note = loadedData.note || '';
+                this.state = 'stopped'; 
+                this.mode = 'focus'; 
+                this.currentCycle = 1;
+                this.totalCycles = loadedData.totalCycles || 4;
+                this.focusTime = loadedData.focusTime || 25; 
+                this.breakTime = loadedData.breakTime || 5;  
+                this.autoAdvance = loadedData.autoAdvance || false;
+                
+                this.timeLeft = this.focusTime * 60;
+                this.timerInterval = null;
+                this.initialTime = this.focusTime * 60;
+
+                this.render();
+                this.attachEvents();
+                this.updateDisplay();
+                this.renderCycles(); 
+                this.updateTotalTimeDisplay(); 
+            }
+
+            calculateTotalTime() {
+                const totalMinutes = (this.focusTime + this.breakTime) * this.totalCycles;
+                return totalMinutes;
+            }
+
+            updateTotalTimeDisplay() {
+                const totalMinutes = this.calculateTotalTime();
+                const formattedTime = formatTotalTime(totalMinutes);
+                
+                const element = document.getElementById(`total-time-${this.id}`);
+                if (element) {
+                    element.innerText = formattedTime;
+                }
+            }
+
+
+            render() {
+                const container = document.getElementById('dashboard');
+                const html = `
+                    <div class="session-card" id="card-${this.id}">
+                        <div class="card-header">
+                            <input type="text" class="session-name" value="${this.name}">
+                            <input type="text" class="session-note" placeholder="간단한 메모 (예: 집중 목표)" value="${this.note}">
+                        </div>
+                        
+                        <div class="status-badge" id="status-${this.id}">Ready</div>
+                        
+                        <div class="cycle-visuals" id="cycle-visuals-${this.id}"></div>
+                        
+                        <div class="total-time-display" id="total-time-${this.id}"></div>
+
+                        <div class="timer-display" id="timer-${this.id}">${(this.focusTime).toString().padStart(2, '0')}:00</div>
+                        
+                        <div class="progress-container">
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" id="progress-${this.id}"></div>
+                            </div>
+                        </div>
+
+                        <div class="controls">
+                            <div class="control-group">
+                                <label>집중 시간 (분)</label>
+                                <span id="val-focus-${this.id}">${this.focusTime}</span>
+                                <input type="range" id="input-focus-${this.id}" min="1" max="60" value="${this.focusTime}">
+                            </div>
+                            <div class="control-group">
+                                <label>휴식 시간 (분)</label>
+                                <span id="val-break-${this.id}">${this.breakTime}</span>
+                                <input type="range" id="input-break-${this.id}" min="1" max="10" value="${this.breakTime}">
+                            </div>
+                            <div class="control-group">
+                                <label>총 사이클 수</label>
+                                <span id="val-cycle-${this.id}">${this.totalCycles}</span>
+                                <input type="range" id="input-cycle-${this.id}" min="1" max="20" value="${this.totalCycles}">
+                            </div>
+                            <div class="toggle-wrapper">
+                                <span>자동 진행 (Auto Advance)</span>
+                                <input type="checkbox" id="check-auto-${this.id}" ${this.autoAdvance ? 'checked' : ''}>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button class="btn-start full-width" id="btn-start-${this.id}">시작</button>
+                            <button class="btn-pause full-width" id="btn-pause-${this.id}">일시정지</button>
+                            
+                            <button class="btn-pass" id="btn-pass-${this.id}">PASS ⏭️</button>
+                            <button class="btn-reset" id="btn-reset-${this.id}">리셋 ↺</button>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            }
+            
+            attachEvents() {
+                const updateAndSave = (callback) => (e) => {
+                    callback(e);
+                    if (this.state === 'stopped' || this.mode === 'break' || e.type === 'change' || e.type === 'input') { 
+                        saveSessionData();
+                    }
+                };
+                
+                document.getElementById(`card-${this.id}`).querySelector('.session-note').addEventListener('input', updateAndSave((e) => {
+                    this.note = e.target.value;
+                }));
+                document.getElementById(`card-${this.id}`).querySelector('.session-name').addEventListener('input', updateAndSave((e) => {
+                    this.name = e.target.value;
+                }));
+                
+                document.getElementById(`input-focus-${this.id}`).addEventListener('input', updateAndSave((e) => {
+                    this.focusTime = parseInt(e.target.value);
+                    document.getElementById(`val-focus-${this.id}`).innerText = this.focusTime;
+                    if (this.state === 'stopped' && this.mode === 'focus') this.resetTimer();
+                    this.updateTotalTimeDisplay(); 
+                }));
+                document.getElementById(`input-break-${this.id}`).addEventListener('input', updateAndSave((e) => {
+                    this.breakTime = parseInt(e.target.value);
+                    document.getElementById(`val-break-${this.id}`).innerText = this.breakTime;
+                    if (this.state === 'stopped' && this.mode === 'break') this.resetTimer();
+                    this.updateTotalTimeDisplay(); 
+                }));
+                document.getElementById(`input-cycle-${this.id}`).addEventListener('input', updateAndSave((e) => {
+                    this.totalCycles = parseInt(e.target.value);
+                    document.getElementById(`val-cycle-${this.id}`).innerText = this.totalCycles;
+                    this.renderCycles();
+                    this.updateTotalTimeDisplay(); 
+                }));
+                document.getElementById(`check-auto-${this.id}`).addEventListener('change', updateAndSave((e) => {
+                    this.autoAdvance = e.target.checked;
+                }));
+
+                document.getElementById(`btn-start-${this.id}`).addEventListener('click', () => this.start());
+                document.getElementById(`btn-pause-${this.id}`).addEventListener('click', () => this.pause());
+                document.getElementById(`btn-reset-${this.id}`).addEventListener('click', () => this.resetTimer());
+                document.getElementById(`btn-pass-${this.id}`).addEventListener('click', () => this.skipPhase());
+            }
+
+            // NEW: 사이클 표시 로직 수정 (10개부터 두 줄)
+            renderCycles() {
+                const container = document.getElementById(`cycle-visuals-${this.id}`);
+                let html = '';
+                const total = this.totalCycles;
+                let firstRow, secondRow;
+
+                // 9개까지는 한 줄, 10개부터 두 줄 (총 20개 Max 기준)
+                if (total <= 9) {
+                    firstRow = total;
+                    secondRow = 0;
+                } else {
+                    // 10개 이상일 때 반으로 나누거나, 10개/나머지로 나눕니다.
+                    // 최대 20개이므로 10/10 또는 9/11 등이 가능
+                    firstRow = Math.min(10, Math.ceil(total / 2)); 
+                    secondRow = total - firstRow;
+                }
+
+                for (let i = 1; i <= total; i++) {
+                    const isCurrent = i === this.currentCycle;
+                    const isCompleted = i < this.currentCycle;
+                    
+                    if (i === firstRow + 1 && secondRow > 0) {
+                         // 두 번째 줄 시작 시 줄바꿈
+                         html += '<div style="width: 100%; height: 0; margin-bottom: -5px;"></div>';
+                    }
+
+                    if (isCompleted) {
+                        html += '<span class="cycle-dot completed">●</span>'; 
+                    } else if (isCurrent) {
+                        html += `<span class="cycle-dot current">◉</span>`;
+                    } else {
+                        html += '<span class="cycle-dot future">○</span>'; 
+                    }
+                }
+                container.innerHTML = html;
+            }
+
+            toggleInputs(disabled) {
+                // 집중 모드일 때만 잠금 (disabled=true, mode=focus)
+                const shouldBeDisabled = disabled && (this.mode === 'focus');
+
+                document.getElementById(`input-focus-${this.id}`).disabled = shouldBeDisabled;
+                document.getElementById(`input-break-${this.id}`).disabled = shouldBeDisabled;
+                document.getElementById(`input-cycle-${this.id}`).disabled = shouldBeDisabled;
+                document.getElementById(`check-auto-${this.id}`).disabled = shouldBeDisabled;
+            }
+            
+            // (나머지 메서드는 기능상 변경 없음)
+            
+            updateDisplay() {
+                const minutes = Math.floor(this.timeLeft / 60);
+                const seconds = this.timeLeft % 60;
+                const display = document.getElementById(`timer-${this.id}`);
+                
+                display.innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                const progress = document.getElementById(`progress-${this.id}`);
+                const percent = (this.timeLeft / this.initialTime) * 100;
+                progress.style.width = `${percent}%`;
+
+                const card = document.getElementById(`card-${this.id}`);
+                if (this.mode === 'focus') {
+                    display.classList.remove('break-mode');
+                    progress.style.backgroundColor = 'var(--focus-color)';
+                    card.style.borderTopColor = 'var(--focus-color)';
+                    document.querySelectorAll(`#cycle-visuals-${this.id} .current`).forEach(el => el.style.color = 'var(--focus-color)');
+                } else {
+                    display.classList.add('break-mode');
+                    progress.style.backgroundColor = 'var(--break-color)';
+                    card.style.borderTopColor = 'var(--break-color)';
+                    document.querySelectorAll(`#cycle-visuals-${this.id} .current`).forEach(el => el.style.color = 'var(--break-color)');
+                }
+            }
+
+            updateStatus(msg) {
+                document.getElementById(`status-${this.id}`).innerText = msg;
+            }
+
+            start() {
+                if (this.state === 'running') return;
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                this.state = 'running';
+                document.getElementById(`btn-start-${this.id}`).style.display = 'none';
+                document.getElementById(`btn-pause-${this.id}`).style.display = 'block';
+                
+                this.toggleInputs(true); 
+
+                this.updateStatus(this.mode === 'focus' ? '🔥 집중 중...' : '☕ 휴식 중...');
+                this.renderCycles();
+                this.timerInterval = setInterval(() => {
+                    if (this.timeLeft > 0) {
+                        this.timeLeft--;
+                        this.updateDisplay();
+                    } else {
+                        this.completePhase();
+                    }
+                }, 1000);
+            }
+
+            pause() {
+                if (this.state !== 'running') return;
+                clearInterval(this.timerInterval);
+                this.state = 'paused';
+                document.getElementById(`btn-start-${this.id}`).innerText = '재개';
+                document.getElementById(`btn-start-${this.id}`).style.display = 'block';
+                document.getElementById(`btn-pause-${this.id}`).style.display = 'none';
+                this.toggleInputs(false); 
+                this.updateStatus('⏸️ 일시정지');
+            }
+
+            skipPhase() {
+                clearInterval(this.timerInterval);
+                this.completePhase(true);
+            }
+
+            resetTimer() {
+                clearInterval(this.timerInterval);
+                this.state = 'stopped';
+                this.mode = 'focus';
+                this.currentCycle = 1;
+                this.timeLeft = this.focusTime * 60;
+                this.initialTime = this.timeLeft;
+                document.getElementById(`btn-start-${this.id}`).innerText = '시작';
+                document.getElementById(`btn-start-${this.id}`).style.display = 'block';
+                document.getElementById(`btn-pause-${this.id}`).style.display = 'none';
+                this.toggleInputs(false); 
+                this.updateStatus('Ready');
+                this.renderCycles();
+                this.updateDisplay();
+                saveSessionData(); 
+            }
+
+            completePhase(mute = false) {
+                clearInterval(this.timerInterval);
+                if (!mute) playAlarm(); 
+
+                if (this.mode === 'focus') {
+                    this.mode = 'break';
+                    this.timeLeft = this.breakTime * 60;
+                    this.initialTime = this.timeLeft;
+                    this.updateStatus('☕ 휴식 준비');
+                } else {
+                    if (this.currentCycle < this.totalCycles) {
+                        this.mode = 'focus';
+                        this.currentCycle++;
+                        this.timeLeft = this.focusTime * 60;
+                        this.initialTime = this.timeLeft;
+                        this.updateStatus('🔥 집중 준비');
+                    } else {
+                        this.resetTimer();
+                        this.updateStatus('🎉 전체 완료!');
+                        if(!mute) playAlarm(); 
+                        return;
+                    }
+                }
+                this.renderCycles();
+                this.updateDisplay();
+                
+                this.toggleInputs(false); 
+
+                if (this.autoAdvance) {
+                    this.state = 'stopped';
+                    this.start();
+                } else {
+                    this.state = 'stopped';
+                    document.getElementById(`btn-start-${this.id}`).innerText = '다음 단계 시작';
+                    document.getElementById(`btn-start-${this.id}`).style.display = 'block';
+                    document.getElementById(`btn-pause-${this.id}`).style.display = 'none';
+                }
+            }
+        }
+
+
+        // ===================================
+        // ⚙️ GLOBAL CONTROLLER LOGIC (유지)
+        // ===================================
+        
+        const getSettingsCardHTML = () => {
+            const currentVolume = Math.round(globalVolume * 100);
+            const softSelected = alarmProfile === 'soft' ? 'class="selected"' : '';
+            const mediumSelected = alarmProfile === 'medium' ? 'class="selected"' : '';
+            const loudSelected = alarmProfile === 'loud' ? 'class="selected"' : '';
+            
+            return `
+                <div class="session-card" id="settings-card">
+                    <div class="card-header">
+                        <input type="text" class="session-name" value="전역 설정 (Global Settings)" disabled/>
+                        <input type="text" class="session-note" placeholder="메모는 설정 카드에서는 비활성화" disabled>
+                        
+                        <div class="total-time-display" style="border-bottom: none;"></div> 
+                    </div>
+                    
+                    <div class="status-badge" style="color: var(--setting-color);">대시보드 관리</div>
+                    <div class="cycle-visuals" style="margin-bottom: 20px;"></div>
+
+                    <div class="timer-display" style="font-size: 2rem; color: var(--setting-color); margin-top: 10px;">⚙️</div>
+                    
+                    <div class="progress-container">
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" style="width: 100%; background: #ddd;"></div>
+                        </div>
+                    </div>
+
+                    <div class="controls" style="gap: 20px;">
+                        <div class="control-group">
+                            <label>운영할 타이머 개수 (1~10)</label>
+                            <span id="session-count-value">${sessionCount}</span>
+                            <input type="range" id="session-count-slider" min="1" max="10" value="${sessionCount}">
+                        </div>
+
+                        <div class="control-group">
+                            <label>알람 볼륨</label>
+                            <span id="alarm-volume-value">${currentVolume}%</span>
+                            <input type="range" id="alarm-volume-slider" min="0" max="100" value="${currentVolume}">
+                        </div>
+                        
+                        <div style="grid-column: 1 / 3;">
+                            <label style="font-size: 0.9rem; color: var(--gray-text);">알람 종류 선택</label>
+                            <div class="alarm-selector">
+                                <button id="alarm-soft" data-profile="soft" ${softSelected}>작은 소리 🔈</button>
+                                <button id="alarm-medium" data-profile="medium" ${mediumSelected}>중간 소리 🔔</button>
+                                <button id="alarm-loud" data-profile="loud" ${loudSelected}>큰 소리 🔊</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons full-width" style="margin-top: auto;">
+                        <button id="alarm-test" style="background-color: var(--setting-color); color: white;" class="full-width">테스트 알람 재생</button>
+                    </div>
+                </div>
+            `;
+        };
+
+        function attachGlobalListeners() {
+            const countSlider = document.getElementById('session-count-slider');
+            const countValue = document.getElementById('session-count-value');
+
+            if (!countSlider) return; 
+
+            countSlider.oninput = (e) => {
+                countValue.innerText = e.target.value; 
+            };
+            
+            countSlider.onchange = (e) => {
+                sessionCount = parseInt(e.target.value);
+                saveGlobalSettings(); 
+                createSessions(); 
+            }
+
+            const volumeSlider = document.getElementById('alarm-volume-slider');
+            const volumeValue = document.getElementById('alarm-volume-value');
+            
+            volumeSlider.oninput = (e) => {
+                globalVolume = parseInt(e.target.value) / 100;
+                volumeValue.innerText = `${e.target.value}%`;
+                saveGlobalSettings(); 
+            };
+            
+            document.querySelectorAll('#settings-card .alarm-selector button[data-profile]').forEach(button => {
+                button.onclick = (e) => {
+                    alarmProfile = e.target.dataset.profile;
+                    document.querySelectorAll('#settings-card .alarm-selector button').forEach(btn => btn.classList.remove('selected'));
+                    e.target.classList.add('selected');
+                    saveGlobalSettings(); 
+                };
+            });
+
+            document.getElementById('alarm-test').onclick = playAlarm;
+        }
+
+        function createSessions() {
+            activeSessions.forEach(session => {
+                clearInterval(session.timerInterval);
+            });
+            activeSessions = [];
+            const dashboard = document.getElementById('dashboard');
+            dashboard.innerHTML = ''; 
+
+            const loadedSessions = loadSessionData();
+            
+            for(let i=1; i<=sessionCount; i++) {
+                const loadedData = loadedSessions.find(s => s.id === i) || {};
+                const name = defaultNames[i-1] || `세션 ${i}`;
+                
+                const newSession = new PomodoroSession(i, name, loadedData);
+                activeSessions.push(newSession);
+            }
+            
+            dashboard.insertAdjacentHTML('beforeend', getSettingsCardHTML());
+            
+            attachGlobalListeners(); 
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadGlobalSettings(); 
+            
+            const mainTitleInput = document.getElementById('main-title-input');
+            if (mainTitleInput) {
+                mainTitleInput.value = mainTitle;
+                mainTitleInput.addEventListener('input', (e) => {
+                    mainTitle = e.target.value;
+                    saveGlobalSettings();
+                });
+            }
+            
+            if (audioCtx.state === 'suspended') {
+                const resumeAudio = () => {
+                    audioCtx.resume();
+                    document.body.removeEventListener('touchstart', resumeAudio);
+                    document.body.removeEventListener('mousedown', resumeAudio);
+                };
+                document.body.addEventListener('touchstart', resumeAudio, { once: true });
+                document.body.addEventListener('mousedown', resumeAudio, { once: true });
+            }
+            createSessions(); 
+        });
+
+    </script>
+</body>
+</html>
