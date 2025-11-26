@@ -97,7 +97,7 @@
             border-bottom: 1px solid var(--input-border); 
             width: 100%; 
             padding: 5px 0; 
-            margin-bottom: 5px; /* 기본 간격 */
+            margin-bottom: 5px; 
             outline: none;
             background: transparent; 
         }
@@ -112,17 +112,20 @@
             min-height: 1.2em; 
         }
         
-        /* Cycle Visuals (두 줄 레이아웃 안정화) */
+        /* Cycle Visuals (기본 마진 축소 및 동적 조정을 위한 min-height 유지) */
         .cycle-visuals { 
             display: flex; 
             flex-wrap: wrap;
             justify-content: center; 
             gap: 5px; 
-            margin: 5px 0 10px 0; 
+            /* 기본 마진을 10px에서 5px로 줄임. JS에서 10개 초과 시 늘려줄 것임 */
+            margin: 5px 0 5px 0; 
             font-size: 1.2rem; 
             min-height: 40px; 
             height: auto;
             align-content: flex-start;
+            /* margin-bottom의 동적 변경을 대비하여 transition 추가 */
+            transition: margin-bottom 0.2s ease-in-out; 
         }
         
         .cycle-dot {
@@ -598,7 +601,7 @@
                 document.getElementById(`input-cycle-${this.id}`).addEventListener('input', updateAndSave((e) => {
                     this.totalCycles = parseInt(e.target.value);
                     document.getElementById(`val-cycle-${this.id}`).innerText = this.totalCycles;
-                    this.renderCycles();
+                    this.renderCycles(); // 사이클 수 변경 시 레이아웃 다시 렌더링
                 }));
                 document.getElementById(`check-auto-${this.id}`).addEventListener('change', updateAndSave((e) => {
                     this.autoAdvance = e.target.checked;
@@ -630,20 +633,26 @@
                 const total = this.totalCycles;
                 let firstRow, secondRow;
 
-                if (total <= 10) { 
+                // 1. 사이클 개수에 따른 마진 동적 변경 (요청 사항 반영)
+                if (total <= 10) {
+                    // 한 줄일 때: 마진을 5px로 줄여 공간을 50% 축소 (CSS 기본 5px)
+                    container.style.marginBottom = '5px'; 
                     firstRow = total;
                     secondRow = 0;
                 } else {
+                    // 두 줄일 때: 마진을 15px로 늘려 레이아웃 침범을 방지하고 공간 확보
+                    container.style.marginBottom = '15px'; 
                     firstRow = 10;
                     secondRow = total - firstRow;
                 }
                 
-
+                // 2. 사이클 점 렌더링
                 for (let i = 1; i <= total; i++) {
                     const isCurrent = i === this.currentCycle;
                     const isCompleted = i < this.currentCycle;
                     
                     if (i === firstRow + 1 && secondRow > 0) {
+                         // 두 번째 줄 시작점
                          html += '<div style="width: 100%; height: 0; margin-bottom: -5px;"></div>';
                     }
 
@@ -798,7 +807,6 @@
                 <div class="session-card" id="settings-card">
                     <div class="card-header">
                         <input type="text" class="session-name" value="Setting" disabled/>
-                        
                         <input type="text" class="session-note" id="setting-note-1" placeholder="설정 관련 메모 (첫 번째 줄)" style="margin-bottom: 0px;">
                         <input type="text" class="session-note" id="setting-note-2" placeholder="설정 관련 메모 (두 번째 줄)">
                     </div>
@@ -853,9 +861,6 @@
         };
 
         function attachGlobalListeners() {
-            // NOTE: 이 부분은 Setting 카드에서 메모를 저장하는 기능이 필요하다면 추가적으로 구현해야 합니다.
-            // 현재는 메모 활성화(입력 가능)까지만 반영했습니다.
-
             const countSlider = document.getElementById('session-count-slider');
             const countValue = document.getElementById('session-count-value');
 
