@@ -242,9 +242,15 @@
             background: #666;
         }
         input[type="checkbox"]:checked {
-            /* ON 상태일 때 밝은 녹색으로 '불이 들어온' 효과 */
+            /* 라이트 모드에서는 기존 setting-color 사용 */
             background: var(--setting-color); 
         }
+        
+        /* 🔥 수정된 부분: 다크 모드에서 스위치 ON 상태일 때 명확한 focus-color 적용 */
+        body.dark-mode input[type="checkbox"]:checked {
+            background: var(--focus-color); 
+        }
+        
         input[type="checkbox"]::after {
             content: '';
             position: absolute;
@@ -260,8 +266,6 @@
             transform: translateX(16px);
         }
         
-        /* 이전 요청에서 사용된 텍스트 강조 CSS는 제거하여 토글 자체의 색상 변화에 집중함 */
-
         /* --- Buttons --- */
         .action-buttons { 
             display: grid; 
@@ -810,7 +814,6 @@
                 toggleDarkMode(e.target.checked);
             });
             
-            // Notes listeners are now slightly adjusted due to new wrapper
             document.getElementById('setting-note-1').addEventListener('input', (e) => {
                 settingNote1 = e.target.value;
                 saveGlobalSettings();
