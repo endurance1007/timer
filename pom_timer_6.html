@@ -101,8 +101,19 @@
             outline: none;
             background: transparent;
         }
-        #settings-card .session-note:last-of-type {
-             margin-bottom: 20px; 
+        
+        /* Note Wrapper Styling for Global Settings Card */
+        .notes-wrapper {
+            padding: 15px;
+            background: var(--control-bg); 
+            border-radius: 8px; 
+            margin-bottom: 10px; /* 액션 버튼과의 간격 */
+        }
+        .notes-wrapper .session-note {
+             margin-bottom: 5px; /* 내부 간격 줄임 */
+        }
+        .notes-wrapper .session-note:last-child {
+             margin-bottom: 0; 
         }
 
         /* --- Cycle Visuals --- */
@@ -226,13 +237,13 @@
             border-radius: 10px;
             background: #ccc;
             transition: background 0.3s;
-            /* 토글 버튼과 레이블이 동일 선상에 있어야 + 선택자가 작동하므로 순서 조정 필요 */
         }
         body.dark-mode input[type="checkbox"] {
             background: #666;
         }
         input[type="checkbox"]:checked {
-            background: var(--setting-color);
+            /* ON 상태일 때 밝은 녹색으로 '불이 들어온' 효과 */
+            background: var(--setting-color); 
         }
         input[type="checkbox"]::after {
             content: '';
@@ -249,16 +260,8 @@
             transform: translateX(16px);
         }
         
-        /* 🔥 NEW: 토글이 켜졌을 때 레이블 텍스트 강조 (다크모드/자동 진행 모두 적용) */
-        .toggle-wrapper input[type="checkbox"]:checked + span {
-            color: var(--focus-color); 
-            font-weight: bold;
-        }
-        /* 다크모드일 때 레이블 색상 조정 */
-        body.dark-mode .toggle-wrapper input[type="checkbox"]:checked + span {
-            color: var(--text-color); /* 다크모드에서 흰색 텍스트로 강조 */
-        }
-        
+        /* 이전 요청에서 사용된 텍스트 강조 CSS는 제거하여 토글 자체의 색상 변화에 집중함 */
+
         /* --- Buttons --- */
         .action-buttons { 
             display: grid; 
@@ -451,7 +454,7 @@
                     <div class="session-card" id="card-${this.id}">
                         <div class="card-header">
                             <input type="text" class="session-name" value="${this.name}">
-                            <input type="text" class="session-note" placeholder="" value="${this.note}">
+                            <input type="text" class="session-note" placeholder="메모" value="${this.note}">
                         </div>
                         
                         <div class="status-badge" id="status-${this.id}">Ready</div>
@@ -490,8 +493,8 @@
                                 <input type="range" id="input-cycle-${this.id}" min="1" max="20" value="${this.totalCycles}">
                             </div>
                             <div class="toggle-wrapper">
-                                <input type="checkbox" id="check-auto-${this.id}" ${this.autoAdvance ? 'checked' : ''}>
                                 <span>자동 진행</span> 
+                                <input type="checkbox" id="check-auto-${this.id}" ${this.autoAdvance ? 'checked' : ''}>
                             </div>
                         </div>
                     </div>
@@ -711,14 +714,10 @@
             return `
                 <div class="session-card" id="settings-card">
                     <div class="card-header">
-                        <input type="text" class="session-name" value="Settings" disabled/>
-                        <input type="text" class="session-note" id="setting-note-1" placeholder="" value="${settingNote1}">
-                        <input type="text" class="session-note" id="setting-note-2" placeholder="" value="${settingNote2}">
-                        <input type="text" class="session-note" id="setting-note-3" placeholder="" value="${settingNote3}">
-                        <input type="text" class="session-note" id="setting-note-4" placeholder="" value="${settingNote4}">
+                        <input type="text" class="session-name" value="Setting" disabled/>
                     </div>
                     
-                    <div class="status-badge" style="color: var(--setting-color);">!!오늘도 즐겁게!!</div>
+                    <div class="status-badge" style="color: var(--setting-color);">대시보드 관리</div>
                     <div class="cycle-visuals" style="margin-bottom: 20px;"></div>
 
                     <div class="timer-display" style="font-size: 2rem; color: var(--setting-color); margin-top: 10px;">⚙️</div>
@@ -752,9 +751,16 @@
                         </div>
                         
                         <div class="toggle-wrapper" style="margin-top: 5px; padding-top: 10px; border-top: 1px solid var(--input-border);">
-                            <input type="checkbox" id="dark-mode-toggle" ${isDarkMode ? 'checked' : ''}>
                             <span>다크 모드</span>
+                            <input type="checkbox" id="dark-mode-toggle" ${isDarkMode ? 'checked' : ''}>
                         </div>
+                    </div>
+
+                    <div class="notes-wrapper">
+                        <input type="text" class="session-note" id="setting-note-1" placeholder="메모 1" value="${settingNote1}">
+                        <input type="text" class="session-note" id="setting-note-2" placeholder="메모 2" value="${settingNote2}">
+                        <input type="text" class="session-note" id="setting-note-3" placeholder="메모 3" value="${settingNote3}">
+                        <input type="text" class="session-note" id="setting-note-4" placeholder="메모 4" value="${settingNote4}">
                     </div>
                     
                     <div class="action-buttons full-width" style="margin-top: 20px;">
@@ -804,6 +810,7 @@
                 toggleDarkMode(e.target.checked);
             });
             
+            // Notes listeners are now slightly adjusted due to new wrapper
             document.getElementById('setting-note-1').addEventListener('input', (e) => {
                 settingNote1 = e.target.value;
                 saveGlobalSettings();
