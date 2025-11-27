@@ -50,7 +50,7 @@
             transition: background-color 0.3s;
         }
 
-        /* --- New: Editable Main Title Style --- */
+        /* --- Editable Main Title Style --- */
         .main-title-input { 
             margin-bottom: 20px; 
             font-weight: 800; 
@@ -68,9 +68,19 @@
             line-height: 1;
         }
         /* 기존 h1 스타일을 제거하거나 덮어씁니다 */
-        h1 { display: none; } /* h1 사용을 중단하고 input을 사용 */
+        h1 { display: none; } 
 
-
+        /* 🌟 NEW: Global Summary Style */
+        #global-summary {
+            text-align: center;
+            margin-bottom: 25px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--gray-text);
+            transition: color 0.3s;
+            line-height: 1.4;
+        }
+        
         /* --- Dashboard Layout --- */
         .dashboard {
             display: grid;
@@ -304,6 +314,8 @@
 <body>
 
     <input type="text" id="main-title-input" class="main-title-input" value="Pomodoro">
+    
+    <div id="global-summary">총 0시간 00분 \ 0시간 00분 남음</div>
 
     <div class="dashboard" id="dashboard">
     </div>
@@ -316,7 +328,7 @@
         let alarmProfile = 'medium';
         let sessionCount = 5;
         let isDarkMode = false; 
-        let mainTitle = 'Pomodoro'; // 🌟 NEW: 메인 타이틀 상태 추가
+        let mainTitle = 'Pomodoro'; 
         let settingNote1 = '';
         let settingNote2 = '';
         let settingNote3 = '';
@@ -334,7 +346,7 @@
                 globalVolume: globalVolume,
                 alarmProfile: alarmProfile,
                 isDarkMode: isDarkMode, 
-                mainTitle: mainTitle, // 🌟 NEW: 메인 타이틀 저장
+                mainTitle: mainTitle, 
                 settingNote1: settingNote1,
                 settingNote2: settingNote2,
                 settingNote3: settingNote3,
@@ -356,7 +368,7 @@
                     globalVolume = settings.globalVolume !== undefined ? settings.globalVolume : 0.5;
                     alarmProfile = settings.alarmProfile || 'medium';
                     isDarkMode = settings.isDarkMode !== undefined ? settings.isDarkMode : false; 
-                    mainTitle = settings.mainTitle || 'Pomodoro'; // 🌟 NEW: 메인 타이틀 로드
+                    mainTitle = settings.mainTitle || 'Pomodoro'; 
                     settingNote1 = settings.settingNote1 || '';
                     settingNote2 = settings.settingNote2 || '';
                     settingNote3 = settings.settingNote3 || '';
@@ -442,6 +454,69 @@
             document.body.classList.toggle('dark-mode', isDarkMode);
             saveGlobalSettings();
         }
+        
+        // ===================================
+        // 📈 GLOBAL SUMMARY FUNCTIONS (NEW)
+        // ===================================
+
+        /**
+         * 초(seconds)를 '0시간 00분' 형식의 문자열로 변환합니다.
+         */
+        function formatTime(totalSeconds) {
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            return `${hours}시간 ${minutes.toString().padStart(2, '0')}분`;
+        }
+
+        /**
+         * 모든 활성 세션의 총 예정 시간과 남은 시간을 계산하여 화면에 업데이트합니다.
+         * 남은 시간 = 총 예정 시간 - 총 경과 시간으로 계산됩니다.
+         */
+        function updateTotalTimeSummary() {
+            let totalScheduledSeconds = 0;
+            let totalElapsedSeconds = 0;
+            
+            activeSessions.forEach(session => {
+                const focusSec = session.focusTime * 60;
+                const breakSec = session.breakTime * 60;
+                const cycleDuration = focusSec + breakSec;
+                
+                // 1. Total Scheduled Time Calculation
+                totalScheduledSeconds += cycleDuration * session.totalCycles;
+                
+                // 2. Total Elapsed Time Calculation
+                
+                // Time elapsed up to the start of the current cycle
+                const elapsedFullCycles = Math.max(0, session.currentCycle - 1);
+                totalElapsedSeconds += elapsedFullCycles * cycleDuration;
+                
+                if (session.state === 'running' || session.state === 'paused') {
+                    // Time elapsed in the current phase
+                    const currentPhaseDuration = (session.mode === 'focus' ? focusSec : breakSec);
+                    totalElapsedSeconds += (currentPhaseDuration - session.timeLeft);
+                    
+                    // If break mode, we must add the full focus time of the current cycle (which precedes the break)
+                    if (session.mode === 'break') {
+                        totalElapsedSeconds += focusSec; 
+                    }
+                }
+                // If state is 'stopped' and currentCycle is 1, elapsed is 0. 
+                // If state is 'stopped' and currentCycle > totalCycles (i.e., finished), elapsed = totalScheduledSeconds, which makes remaining = 0.
+            });
+            
+            // 3. Total Remaining Time Calculation
+            let totalRemainingSeconds = totalScheduledSeconds - totalElapsedSeconds;
+            totalRemainingSeconds = Math.max(0, totalRemainingSeconds); // Guard against negative numbers
+
+            const totalTimeStr = formatTime(totalScheduledSeconds);
+            const remainingTimeStr = formatTime(totalRemainingSeconds);
+            
+            const summaryDiv = document.getElementById('global-summary');
+            if (summaryDiv) {
+                summaryDiv.innerText = `총 ${totalTimeStr} \\ ${remainingTimeStr} 남음`;
+            }
+        }
+
 
         // ===================================
         // ⏱️ POMODORO SESSION CLASS
@@ -454,7 +529,7 @@
                 this.note = loadedData.note || '';
                 this.state = 'stopped'; 
                 this.mode = 'focus'; 
-                this.currentCycle = 1;
+                this.currentCycle = loadedData.currentCycle || 1; // currentCycle 로드 로직 추가
                 this.totalCycles = loadedData.totalCycles || 4;
                 this.focusTime = loadedData.focusTime || 25; 
                 this.breakTime = loadedData.breakTime || 5;  
@@ -469,6 +544,8 @@
                 this.updateDisplay();
                 this.renderCycles(); 
             }
+            
+            // (생략된 render, renderCycles, updateDisplay, updateStatus 함수는 이전과 동일합니다)
 
             render() {
                 const container = document.getElementById('dashboard');
@@ -543,16 +620,19 @@
                     this.focusTime = parseInt(e.target.value);
                     document.getElementById(`val-focus-${this.id}`).innerText = this.focusTime;
                     if (this.state === 'stopped' && this.mode === 'focus') this.resetTimer();
+                    updateTotalTimeSummary(); // 🌟 NEW
                 }));
                 document.getElementById(`input-break-${this.id}`).addEventListener('input', updateAndSave((e) => {
                     this.breakTime = parseInt(e.target.value);
                     document.getElementById(`val-break-${this.id}`).innerText = this.breakTime;
                     if (this.state === 'stopped' && this.mode === 'break') this.resetTimer();
+                    updateTotalTimeSummary(); // 🌟 NEW
                 }));
                 document.getElementById(`input-cycle-${this.id}`).addEventListener('input', updateAndSave((e) => {
                     this.totalCycles = parseInt(e.target.value);
                     document.getElementById(`val-cycle-${this.id}`).innerText = this.totalCycles;
                     this.renderCycles();
+                    updateTotalTimeSummary(); // 🌟 NEW
                 }));
                 document.getElementById(`check-auto-${this.id}`).addEventListener('change', updateAndSave((e) => {
                     this.autoAdvance = e.target.checked;
@@ -639,10 +719,12 @@
                     if (this.timeLeft > 0) {
                         this.timeLeft--;
                         this.updateDisplay();
+                        updateTotalTimeSummary(); // 🌟 NEW: 매 초 업데이트
                     } else {
                         this.completePhase();
                     }
                 }, 1000);
+                updateTotalTimeSummary(); // 🌟 NEW: 시작 시 업데이트
             }
 
             pause() {
@@ -653,6 +735,7 @@
                 document.getElementById(`btn-start-${this.id}`).style.display = 'block';
                 document.getElementById(`btn-pause-${this.id}`).style.display = 'none';
                 this.updateStatus('⏸️ 일시정지');
+                updateTotalTimeSummary(); // 🌟 NEW: 일시정지 시 업데이트
             }
 
             skipPhase() {
@@ -675,6 +758,7 @@
                 this.renderCycles();
                 this.updateDisplay();
                 saveSessionData();
+                updateTotalTimeSummary(); // 🌟 NEW: 리셋 시 업데이트
             }
 
             completePhase(mute = false) {
@@ -685,23 +769,28 @@
                     this.mode = 'break';
                     this.timeLeft = this.breakTime * 60;
                     this.initialTime = this.timeLeft;
+                    this.currentCycle++; // Cycle이 끝났을 때만 currentCycle 증가
                     this.updateStatus('☕ 휴식 준비');
                 } else {
-                    if (this.currentCycle < this.totalCycles) {
+                    // 휴식 모드가 끝났을 때 사이클을 검사. (currentCycle은 이미 focus 모드 완료 시 증가됨)
+                    if (this.currentCycle <= this.totalCycles) {
                         this.mode = 'focus';
-                        this.currentCycle++;
                         this.timeLeft = this.focusTime * 60;
                         this.initialTime = this.timeLeft;
                         this.updateStatus('🔥 집중 준비');
                     } else {
                         this.resetTimer();
+                        this.currentCycle = this.totalCycles + 1; // 완료 상태 표시
                         this.updateStatus('🎉 전체 완료!');
                         if(!mute) playAlarm(); 
+                        updateTotalTimeSummary(); // 🌟 NEW: 전체 완료 시 즉시 0으로 업데이트
                         return;
                     }
                 }
                 this.renderCycles();
                 this.updateDisplay();
+                updateTotalTimeSummary(); // 🌟 NEW: 페이즈 완료 시 업데이트
+
                 if (this.autoAdvance) {
                     this.state = 'stopped';
                     this.start();
@@ -713,7 +802,7 @@
                     this.toggleInputs(false);
                 }
             }
-
+            
             toggleInputs(disabled) {
                 document.getElementById(`input-focus-${this.id}`).disabled = disabled;
                 document.getElementById(`input-break-${this.id}`).disabled = disabled;
@@ -870,22 +959,23 @@
             dashboard.insertAdjacentHTML('beforeend', getSettingsCardHTML());
             
             attachGlobalListeners(); 
+            updateTotalTimeSummary(); // 🌟 NEW: 세션 생성 후 초기 업데이트
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             loadGlobalSettings(); 
             toggleDarkMode(isDarkMode); 
             
-            // 🌟 NEW: 메인 타이틀 업데이트 및 이벤트 리스너
+            // 메인 타이틀 업데이트 및 이벤트 리스너
             const mainTitleInput = document.getElementById('main-title-input');
             mainTitleInput.value = mainTitle;
             
             mainTitleInput.addEventListener('input', (e) => {
                 mainTitle = e.target.value;
                 saveGlobalSettings();
-                document.title = mainTitle; // 브라우저 탭 이름도 같이 변경
+                document.title = mainTitle; 
             });
-            document.title = mainTitle; // 초기 브라우저 탭 이름 설정
+            document.title = mainTitle; 
 
             if (audioCtx.state === 'suspended') {
                 const resumeAudio = () => {
