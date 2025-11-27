@@ -50,12 +50,26 @@
             transition: background-color 0.3s;
         }
 
-        h1 { 
+        /* --- New: Editable Main Title Style --- */
+        .main-title-input { 
             margin-bottom: 20px; 
             font-weight: 800; 
             color: var(--focus-color); 
             font-size: 2.5rem;
+            border: none;
+            background: transparent;
+            outline: none;
+            text-align: center;
+            width: 90%; 
+            max-width: 500px;
+            font-family: inherit;
+            transition: color 0.3s;
+            padding: 0;
+            line-height: 1;
         }
+        /* 기존 h1 스타일을 제거하거나 덮어씁니다 */
+        h1 { display: none; } /* h1 사용을 중단하고 input을 사용 */
+
 
         /* --- Dashboard Layout --- */
         .dashboard {
@@ -107,7 +121,6 @@
             padding: 15px;
             background: var(--control-bg); 
             border-radius: 8px; 
-            /* margin-bottom: 10px; */ /* 메모 밑의 간격은 제거됨 */
         }
         .notes-wrapper .session-note {
              margin-bottom: 5px; /* 내부 간격 줄임 */
@@ -290,7 +303,7 @@
 </head>
 <body>
 
-    <h1>Pomodoro</h1>
+    <input type="text" id="main-title-input" class="main-title-input" value="Pomodoro">
 
     <div class="dashboard" id="dashboard">
     </div>
@@ -303,6 +316,7 @@
         let alarmProfile = 'medium';
         let sessionCount = 5;
         let isDarkMode = false; 
+        let mainTitle = 'Pomodoro'; // 🌟 NEW: 메인 타이틀 상태 추가
         let settingNote1 = '';
         let settingNote2 = '';
         let settingNote3 = '';
@@ -320,6 +334,7 @@
                 globalVolume: globalVolume,
                 alarmProfile: alarmProfile,
                 isDarkMode: isDarkMode, 
+                mainTitle: mainTitle, // 🌟 NEW: 메인 타이틀 저장
                 settingNote1: settingNote1,
                 settingNote2: settingNote2,
                 settingNote3: settingNote3,
@@ -341,6 +356,7 @@
                     globalVolume = settings.globalVolume !== undefined ? settings.globalVolume : 0.5;
                     alarmProfile = settings.alarmProfile || 'medium';
                     isDarkMode = settings.isDarkMode !== undefined ? settings.isDarkMode : false; 
+                    mainTitle = settings.mainTitle || 'Pomodoro'; // 🌟 NEW: 메인 타이틀 로드
                     settingNote1 = settings.settingNote1 || '';
                     settingNote2 = settings.settingNote2 || '';
                     settingNote3 = settings.settingNote3 || '';
@@ -859,6 +875,18 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadGlobalSettings(); 
             toggleDarkMode(isDarkMode); 
+            
+            // 🌟 NEW: 메인 타이틀 업데이트 및 이벤트 리스너
+            const mainTitleInput = document.getElementById('main-title-input');
+            mainTitleInput.value = mainTitle;
+            
+            mainTitleInput.addEventListener('input', (e) => {
+                mainTitle = e.target.value;
+                saveGlobalSettings();
+                document.title = mainTitle; // 브라우저 탭 이름도 같이 변경
+            });
+            document.title = mainTitle; // 초기 브라우저 탭 이름 설정
+
             if (audioCtx.state === 'suspended') {
                 const resumeAudio = () => {
                     audioCtx.resume();
