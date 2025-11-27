@@ -240,6 +240,11 @@
             accent-color: var(--focus-color); 
             margin-top: 5px;
         }
+        /* disabled 상태일 때 스타일 (Opacity를 통해 비활성화 느낌 부여) */
+        input[type=range]:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
         
         .toggle-wrapper { 
             display: flex; 
@@ -290,6 +295,11 @@
         }
         input[type="checkbox"]:checked::after {
             transform: translateX(16px);
+        }
+         /* disabled 상태일 때 스타일 */
+        input[type="checkbox"]:disabled {
+             opacity: 0.5;
+             cursor: default;
         }
         
         /* --- Buttons --- */
@@ -440,7 +450,7 @@
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const now = audioCtx.currentTime;
             
-            // 미세한 클릭음: 200Hz, 0.05초, 볼륨 0.05 (매우 작게)
+            // 미세한 클릭음: 200Hz, 0.05초, 볼륨 0.05 (매우 작게, UI 피드백용)
             createBeep(now, 0.05, 200, 'sine', 0.05); 
         }
         
@@ -450,12 +460,12 @@
         function playSoftAlarm() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const now = audioCtx.currentTime;
-            // Soft 알람 프로파일 설정: 440Hz, 0.2초, 볼륨 0.2 (Soft 알람의 정의)
+            // Soft 알람 프로파일 설정: 440Hz, 0.2초, 볼륨 0.2 (사용자 요청에 따른 버튼 피드백용)
             createBeep(now, 0.2, 440, 'sine', 0.2); 
         }
 
         /**
-         * 메인 알람을 재생합니다.
+         * 메인 알람을 재생합니다. (집중/휴식 완료 시, 테스트 버튼 클릭 시)
          */
         function playAlarm() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -626,54 +636,81 @@
             }
             
             attachEvents() {
-                const playClick = () => playClickSound(); // 슬라이더 조작용
                 const playSoft = () => playSoftAlarm(); // 버튼 클릭용
 
-                const updateAndSave = (callback) => (e) => {
-                    // 슬라이더 및 체크박스 조작 시 클릭 사운드 재생
-                    if (e.target.type === 'range' || e.target.type === 'checkbox') {
-                         playClick();
-                    }
-                    callback(e);
-                    if (this.state === 'stopped' || e.type === 'change' || e.type === 'input') { 
-                        saveSessionData();
-                    }
-                    this.updateSessionSummary(); // 설정 변경 시 요약 업데이트
-                };
-                
-                document.getElementById(`card-${this.id}`).querySelector('.session-note').addEventListener('input', updateAndSave((e) => {
+                // Note and Name Inputs
+                document.getElementById(`card-${this.id}`).querySelector('.session-note').addEventListener('input', (e) => {
                     this.note = e.target.value;
-                }));
-                document.getElementById(`card-${this.id}`).querySelector('.session-name').addEventListener('input', updateAndSave((e) => {
+                    saveSessionData();
+                });
+                document.getElementById(`card-${this.id}`).querySelector('.session-name').addEventListener('input', (e) => {
                     this.name = e.target.value;
-                }));
+                    saveSessionData();
+                });
                 
-                // Range Inputs (Slider) -> playClickSound
-                document.getElementById(`input-focus-${this.id}`).addEventListener('input', updateAndSave((e) => {
+                // Range Inputs (Slider) - playClickSound on input, update state on change
+                // 집중 시간
+                const inputFocus = document.getElementById(`input-focus-${this.id}`);
+                inputFocus.addEventListener('input', (e) => {
+                    playClickSound(); // 슬라이더 조작 시 클릭음
                     this.focusTime = parseInt(e.target.value);
                     document.getElementById(`val-focus-${this.id}`).innerText = this.focusTime;
-                    if (this.state === 'stopped' && this.mode === 'focus') this.resetTimer();
-                }));
-                document.getElementById(`input-break-${this.id}`).addEventListener('input', updateAndSave((e) => {
+                    if (this.state === 'stopped' && this.mode === 'focus') this.resetTimerDisplay();
+                    this.updateSessionSummary();
+                });
+                inputFocus.addEventListener('change', (e) => {
+                    saveSessionData();
+                });
+                
+                // 휴식 시간
+                const inputBreak = document.getElementById(`input-break-${this.id}`);
+                inputBreak.addEventListener('input', (e) => {
+                    playClickSound(); // 슬라이더 조작 시 클릭음
                     this.breakTime = parseInt(e.target.value);
                     document.getElementById(`val-break-${this.id}`).innerText = this.breakTime;
-                    if (this.state === 'stopped' && this.mode === 'break') this.resetTimer();
-                }));
-                document.getElementById(`input-cycle-${this.id}`).addEventListener('input', updateAndSave((e) => {
+                    if (this.state === 'stopped' && this.mode === 'break') this.resetTimerDisplay();
+                    this.updateSessionSummary();
+                });
+                inputBreak.addEventListener('change', (e) => {
+                    saveSessionData();
+                });
+                
+                // 총 사이클 수
+                const inputCycle = document.getElementById(`input-cycle-${this.id}`);
+                inputCycle.addEventListener('input', (e) => {
+                    playClickSound(); // 슬라이더 조작 시 클릭음
                     this.totalCycles = parseInt(e.target.value);
                     document.getElementById(`val-cycle-${this.id}`).innerText = this.totalCycles;
                     this.renderCycles();
-                }));
+                    this.updateSessionSummary();
+                });
+                 inputCycle.addEventListener('change', (e) => {
+                    saveSessionData();
+                });
+
                 // Checkbox -> playClickSound
-                document.getElementById(`check-auto-${this.id}`).addEventListener('change', updateAndSave((e) => {
+                const checkAuto = document.getElementById(`check-auto-${this.id}`);
+                checkAuto.addEventListener('change', (e) => {
+                    playClickSound(); // 체크박스 조작 시 클릭음
                     this.autoAdvance = e.target.checked;
-                }));
+                    saveSessionData();
+                });
 
                 // Action Buttons -> playSoftAlarm
                 document.getElementById(`btn-start-${this.id}`).addEventListener('click', () => { playSoft(); this.start(); });
                 document.getElementById(`btn-pause-${this.id}`).addEventListener('click', () => { playSoft(); this.pause(); });
                 document.getElementById(`btn-reset-${this.id}`).addEventListener('click', () => { playSoft(); this.resetTimer(); });
                 document.getElementById(`btn-pass-${this.id}`).addEventListener('click', () => { playSoft(); this.skipPhase(); });
+            }
+
+             /**
+             * 타이머는 리셋하지 않고, 설정 변경을 반영하여 디스플레이만 초기 상태로 업데이트합니다.
+             */
+            resetTimerDisplay() {
+                this.timeLeft = (this.mode === 'focus' ? this.focusTime : this.breakTime) * 60;
+                this.initialTime = this.timeLeft;
+                this.updateDisplay();
+                this.updateSessionSummary();
             }
 
             renderCycles() {
@@ -744,7 +781,8 @@
                 this.state = 'running';
                 document.getElementById(`btn-start-${this.id}`).style.display = 'none';
                 document.getElementById(`btn-pause-${this.id}`).style.display = 'block';
-                this.toggleInputs(true);
+                // 실행 중일 때는 입력 비활성화
+                this.toggleInputs(true); 
                 this.updateStatus(this.mode === 'focus' ? '🔥 집중 중...' : '☕ 휴식 중...');
                 this.renderCycles();
                 this.timerInterval = setInterval(() => {
@@ -766,6 +804,8 @@
                 document.getElementById(`btn-start-${this.id}`).innerText = '재개';
                 document.getElementById(`btn-start-${this.id}`).style.display = 'block';
                 document.getElementById(`btn-pause-${this.id}`).style.display = 'none';
+                // 일시정지 시 입력 활성화 (사용자 요청 반영)
+                this.toggleInputs(false); 
                 this.updateStatus('⏸️ 일시정지');
                 this.updateSessionSummary(); // 일시정지 시 업데이트
             }
@@ -785,7 +825,8 @@
                 document.getElementById(`btn-start-${this.id}`).innerText = '시작';
                 document.getElementById(`btn-start-${this.id}`).style.display = 'block';
                 document.getElementById(`btn-pause-${this.id}`).style.display = 'none';
-                this.toggleInputs(false);
+                 // 리셋 시 입력 활성화
+                this.toggleInputs(false); 
                 this.updateStatus('Ready');
                 this.renderCycles();
                 this.updateDisplay();
@@ -830,15 +871,23 @@
                     document.getElementById(`btn-start-${this.id}`).innerText = '다음 단계 시작';
                     document.getElementById(`btn-start-${this.id}`).style.display = 'block';
                     document.getElementById(`btn-pause-${this.id}`).style.display = 'none';
-                    this.toggleInputs(false);
+                    // 자동 진행 OFF 시 다음 단계 대기 중이므로 입력 활성화
+                    this.toggleInputs(false); 
                 }
             }
             
+             /**
+             * Input 요소들을 활성화/비활성화합니다.
+             * @param {boolean} disabled - true면 비활성화, false면 활성화
+             */
             toggleInputs(disabled) {
                 document.getElementById(`input-focus-${this.id}`).disabled = disabled;
                 document.getElementById(`input-break-${this.id}`).disabled = disabled;
                 document.getElementById(`input-cycle-${this.id}`).disabled = disabled;
                 document.getElementById(`check-auto-${this.id}`).disabled = disabled;
+                // 이름과 노트 입력창도 활성화/비활성화 (타이머가 멈춰있을 때만 수정 가능하도록)
+                document.getElementById(`card-${this.id}`).querySelector('.session-name').disabled = disabled;
+                document.getElementById(`card-${this.id}`).querySelector('.session-note').disabled = disabled;
             }
         }
 
@@ -914,14 +963,17 @@
         };
 
         function attachGlobalListeners() {
+            const playClick = () => playClickSound(); // 슬라이더 조작용
+            const playSoft = () => playSoftAlarm(); // 버튼 클릭용
+
             const countSlider = document.getElementById('session-count-slider');
             const countValue = document.getElementById('session-count-value');
 
             if (!countSlider) return; 
 
-            // Slider: playClickSound
+            // Slider: playClickSound on input
             countSlider.oninput = (e) => {
-                playClickSound(); 
+                playClick(); 
                 countValue.innerText = e.target.value; 
             };
             
@@ -934,9 +986,9 @@
             const volumeSlider = document.getElementById('alarm-volume-slider');
             const volumeValue = document.getElementById('alarm-volume-value');
             
-            // Slider: playClickSound
+            // Slider: playClickSound on input
             volumeSlider.oninput = (e) => {
-                playClickSound();
+                playClick();
                 globalVolume = parseInt(e.target.value) / 100;
                 volumeValue.innerText = `${e.target.value}%`;
                 saveGlobalSettings();
@@ -945,7 +997,7 @@
             // Buttons: playSoftAlarm
             document.querySelectorAll('#settings-card .alarm-selector button[data-profile]').forEach(button => {
                 button.onclick = (e) => {
-                    playSoftAlarm(); // Soft Alarm Feedback
+                    playSoft(); // Soft Alarm Feedback
                     alarmProfile = e.target.dataset.profile;
                     document.querySelectorAll('#settings-card .alarm-selector button').forEach(btn => btn.classList.remove('selected'));
                     e.target.classList.add('selected');
@@ -957,11 +1009,11 @@
             
             // Checkbox: playClickSound
             document.getElementById('dark-mode-toggle').addEventListener('change', (e) => {
-                playClickSound(); // Click Sound Feedback
+                playClick(); // Click Sound Feedback
                 toggleDarkMode(e.target.checked);
             });
             
-            // Note inputs (no sound needed)
+            // Note inputs (no sound needed, but save on input)
             document.getElementById('setting-note-1').addEventListener('input', (e) => {
                 settingNote1 = e.target.value;
                 saveGlobalSettings();
