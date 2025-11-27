@@ -73,8 +73,8 @@
         /* 🌟 NEW: Session Summary Style (카드별 요약) */
         .session-summary {
             text-align: center;
-            margin-top: 5px;
-            margin-bottom: 15px;
+            margin-top: 5px; /* 타이머와의 간격 */
+            margin-bottom: 15px; /* 진행률 바와의 간격 */
             font-weight: 600;
             font-size: 0.95rem;
             color: var(--gray-text);
@@ -489,7 +489,7 @@
                 this.attachEvents();
                 this.updateDisplay();
                 this.renderCycles(); 
-                this.updateSessionSummary(); // 🌟 NEW: 초기 세션 요약 표시
+                this.updateSessionSummary(); // 초기 세션 요약 표시
             }
 
             /**
@@ -546,13 +546,13 @@
                             <input type="text" class="session-note" placeholder="간단한 메모 (예: 집중 목표)" value="${this.note}">
                         </div>
                         
-                        <div class="session-summary" id="session-summary-${this.id}"></div>
-
                         <div class="status-badge" id="status-${this.id}">Ready</div>
                         <div class="cycle-visuals" id="cycle-visuals-${this.id}"></div>
                         
                         <div class="timer-display" id="timer-${this.id}">${(this.focusTime).toString().padStart(2, '0')}:00</div>
                         
+                        <div class="session-summary" id="session-summary-${this.id}"></div>
+
                         <div class="progress-container">
                             <div class="progress-bar-bg">
                                 <div class="progress-bar-fill" id="progress-${this.id}"></div>
@@ -599,7 +599,7 @@
                     if (this.state === 'stopped' || e.type === 'change' || e.type === 'input') { 
                         saveSessionData();
                     }
-                    this.updateSessionSummary(); // 🌟 NEW: 설정 변경 시 요약 업데이트
+                    this.updateSessionSummary(); // 설정 변경 시 요약 업데이트
                 };
                 
                 document.getElementById(`card-${this.id}`).querySelector('.session-note').addEventListener('input', updateAndSave((e) => {
@@ -709,12 +709,12 @@
                     if (this.timeLeft > 0) {
                         this.timeLeft--;
                         this.updateDisplay();
-                        this.updateSessionSummary(); // 🌟 NEW: 매 초 업데이트
+                        this.updateSessionSummary(); // 매 초 업데이트
                     } else {
                         this.completePhase();
                     }
                 }, 1000);
-                this.updateSessionSummary(); // 🌟 NEW: 시작 시 업데이트
+                this.updateSessionSummary(); // 시작 시 업데이트
             }
 
             pause() {
@@ -725,7 +725,7 @@
                 document.getElementById(`btn-start-${this.id}`).style.display = 'block';
                 document.getElementById(`btn-pause-${this.id}`).style.display = 'none';
                 this.updateStatus('⏸️ 일시정지');
-                this.updateSessionSummary(); // 🌟 NEW: 일시정지 시 업데이트
+                this.updateSessionSummary(); // 일시정지 시 업데이트
             }
 
             skipPhase() {
@@ -748,7 +748,7 @@
                 this.renderCycles();
                 this.updateDisplay();
                 saveSessionData();
-                this.updateSessionSummary(); // 🌟 NEW: 리셋 시 업데이트
+                this.updateSessionSummary(); // 리셋 시 업데이트
             }
 
             completePhase(mute = false) {
@@ -772,13 +772,13 @@
                         this.currentCycle = this.totalCycles + 1; 
                         this.updateStatus('🎉 전체 완료!');
                         if(!mute) playAlarm(); 
-                        this.updateSessionSummary(); // 🌟 NEW: 전체 완료 시 업데이트
+                        this.updateSessionSummary(); // 전체 완료 시 업데이트
                         return;
                     }
                 }
                 this.renderCycles();
                 this.updateDisplay();
-                this.updateSessionSummary(); // 🌟 NEW: 페이즈 완료 시 업데이트
+                this.updateSessionSummary(); // 페이즈 완료 시 업데이트
 
                 if (this.autoAdvance) {
                     this.state = 'stopped';
@@ -817,11 +817,13 @@
                         <input type="text" class="session-name" value="Setting" disabled/>
                     </div>
                     
-                    <div class="session-summary" style="font-size: 1rem; margin-bottom: 5px;">타이머 설정 및 관리</div>
-                    
                     <div class="status-badge" style="color: var(--setting-color);">대시보드 관리</div>
                     
+                    <div class="cycle-visuals" style="margin-bottom: 5px;"></div>
+                    
                     <div class="timer-display" style="font-size: 2rem; color: var(--setting-color); margin-top: 10px;">⚙️</div>
+
+                    <div class="session-summary" style="font-size: 1rem; margin-bottom: 5px;">타이머 설정 및 메모 공간</div>
                     
                     <div class="progress-container">
                         <div class="progress-bar-bg">
