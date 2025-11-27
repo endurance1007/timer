@@ -76,7 +76,7 @@
             flex-direction: column;
             border-top: 6px solid var(--focus-color);
             position: relative;
-            min-height: 480px; 
+            /* 기존 min-height 제거: 버튼과 설정이 타이머 아래로 자연스럽게 배치되도록 함 */
         }
 
         .session-name { 
@@ -250,7 +250,12 @@
         }
 
         /* --- Buttons --- */
-        .action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; }
+        .action-buttons { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 8px; 
+            margin-top: 20px; /* 자연스러운 간격 추가 */
+        }
         .full-width { grid-column: span 2; }
         button { padding: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: opacity 0.2s; font-size: 0.9rem; }
         button:hover { opacity: 0.9; }
@@ -278,7 +283,7 @@
         let globalVolume = 0.5;
         let alarmProfile = 'medium';
         let sessionCount = 5;
-        let isDarkMode = false; // 다크 모드 전역 상태 변수 복원
+        let isDarkMode = false; 
         let settingNote1 = '';
         let settingNote2 = '';
         let settingNote3 = '';
@@ -290,13 +295,12 @@
         // 💾 LOCAL STORAGE FUNCTIONS
         // ===================================
 
-        // 1. 전역 설정 저장 및 로드
         function saveGlobalSettings() {
             const settings = {
                 sessionCount: sessionCount,
                 globalVolume: globalVolume,
                 alarmProfile: alarmProfile,
-                isDarkMode: isDarkMode, // 다크 모드 상태 저장 로직 복원
+                isDarkMode: isDarkMode, 
                 settingNote1: settingNote1,
                 settingNote2: settingNote2,
                 settingNote3: settingNote3,
@@ -317,7 +321,7 @@
                     sessionCount = settings.sessionCount || 5;
                     globalVolume = settings.globalVolume !== undefined ? settings.globalVolume : 0.5;
                     alarmProfile = settings.alarmProfile || 'medium';
-                    isDarkMode = settings.isDarkMode !== undefined ? settings.isDarkMode : false; // 다크 모드 상태 로드 로직 복원
+                    isDarkMode = settings.isDarkMode !== undefined ? settings.isDarkMode : false; 
                     settingNote1 = settings.settingNote1 || '';
                     settingNote2 = settings.settingNote2 || '';
                     settingNote3 = settings.settingNote3 || '';
@@ -328,7 +332,6 @@
             }
         }
 
-        // 2. 개별 세션 데이터 저장 및 로드
         function saveSessionData() {
             const sessionData = activeSessions.map(session => ({
                 id: session.id,
@@ -395,7 +398,6 @@
             }
         }
         
-        // 다크 모드 토글 함수 복원
         function toggleDarkMode(state) {
             if (state === undefined) {
                 isDarkMode = !isDarkMode;
@@ -453,6 +455,14 @@
                             </div>
                         </div>
 
+                        <div class="action-buttons">
+                            <button class="btn-start full-width" id="btn-start-${this.id}">시작</button>
+                            <button class="btn-pause full-width" id="btn-pause-${this.id}">일시정지</button>
+                            
+                            <button class="btn-pass" id="btn-pass-${this.id}">PASS ⏭️</button>
+                            <button class="btn-reset" id="btn-reset-${this.id}">리셋 ↺</button>
+                        </div>
+
                         <div class="controls">
                             <div class="control-group">
                                 <label>집중 시간 (분)</label>
@@ -470,17 +480,9 @@
                                 <input type="range" id="input-cycle-${this.id}" min="1" max="20" value="${this.totalCycles}">
                             </div>
                             <div class="toggle-wrapper">
-                                <span>자동 진행</span>
+                                <span>자동 진행 (Auto Advance)</span>
                                 <input type="checkbox" id="check-auto-${this.id}" ${this.autoAdvance ? 'checked' : ''}>
                             </div>
-                        </div>
-
-                        <div class="action-buttons">
-                            <button class="btn-start full-width" id="btn-start-${this.id}">시작</button>
-                            <button class="btn-pause full-width" id="btn-pause-${this.id}">일시정지</button>
-                            
-                            <button class="btn-pass" id="btn-pass-${this.id}">PASS ⏭️</button>
-                            <button class="btn-reset" id="btn-reset-${this.id}">리셋 ↺</button>
                         </div>
                     </div>
                 `;
@@ -629,229 +631,4 @@
                 this.mode = 'focus';
                 this.currentCycle = 1;
                 this.timeLeft = this.focusTime * 60;
-                this.initialTime = this.timeLeft;
-                document.getElementById(`btn-start-${this.id}`).innerText = '시작';
-                document.getElementById(`btn-start-${this.id}`).style.display = 'block';
-                document.getElementById(`btn-pause-${this.id}`).style.display = 'none';
-                this.toggleInputs(false);
-                this.updateStatus('Ready');
-                this.renderCycles();
-                this.updateDisplay();
-                saveSessionData();
-            }
-
-            completePhase(mute = false) {
-                clearInterval(this.timerInterval);
-                if (!mute) playAlarm(); 
-
-                if (this.mode === 'focus') {
-                    this.mode = 'break';
-                    this.timeLeft = this.breakTime * 60;
-                    this.initialTime = this.timeLeft;
-                    this.updateStatus('☕ 휴식 준비');
-                } else {
-                    if (this.currentCycle < this.totalCycles) {
-                        this.mode = 'focus';
-                        this.currentCycle++;
-                        this.timeLeft = this.focusTime * 60;
-                        this.initialTime = this.timeLeft;
-                        this.updateStatus('🔥 집중 준비');
-                    } else {
-                        this.resetTimer();
-                        this.updateStatus('🎉 전체 완료!');
-                        if(!mute) playAlarm(); 
-                        return;
-                    }
-                }
-                this.renderCycles();
-                this.updateDisplay();
-                if (this.autoAdvance) {
-                    this.state = 'stopped';
-                    this.start();
-                } else {
-                    this.state = 'stopped';
-                    document.getElementById(`btn-start-${this.id}`).innerText = '다음 단계 시작';
-                    document.getElementById(`btn-start-${this.id}`).style.display = 'block';
-                    document.getElementById(`btn-pause-${this.id}`).style.display = 'none';
-                    this.toggleInputs(false);
-                }
-            }
-
-            toggleInputs(disabled) {
-                document.getElementById(`input-focus-${this.id}`).disabled = disabled;
-                document.getElementById(`input-break-${this.id}`).disabled = disabled;
-                document.getElementById(`input-cycle-${this.id}`).disabled = disabled;
-                document.getElementById(`check-auto-${this.id}`).disabled = disabled;
-            }
-        }
-
-
-        // ===================================
-        // ⚙️ GLOBAL CONTROLLER LOGIC
-        // ===================================
-        
-        const getSettingsCardHTML = () => {
-            const currentVolume = Math.round(globalVolume * 100);
-            const softSelected = alarmProfile === 'soft' ? 'class="selected"' : '';
-            const mediumSelected = alarmProfile === 'medium' ? 'class="selected"' : '';
-            const loudSelected = alarmProfile === 'loud' ? 'class="selected"' : '';
-            
-            return `
-                <div class="session-card" id="settings-card">
-                    <div class="card-header">
-                        <input type="text" class="session-name" value="Settings" disabled/>
-                        <input type="text" class="session-note" id="setting-note-1" placeholder="" value="${settingNote1}">
-                        <input type="text" class="session-note" id="setting-note-2" placeholder="" value="${settingNote2}">
-                        <input type="text" class="session-note" id="setting-note-3" placeholder="" value="${settingNote3}">
-                        <input type="text" class="session-note" id="setting-note-4" placeholder="" value="${settingNote4}">
-                    </div>
-                    
-                    <div class="status-badge" style="color: var(--setting-color);">대시보드 관리</div>
-                    <div class="cycle-visuals" style="margin-bottom: 20px;"></div>
-
-                    <div class="timer-display" style="font-size: 2rem; color: var(--setting-color); margin-top: 10px;">⚙️</div>
-                    
-                    <div class="progress-container">
-                        <div class="progress-bar-bg">
-                            <div class="progress-bar-fill" style="width: 100%; background: #ddd;"></div>
-                        </div>
-                    </div>
-
-                    <div class="controls" style="gap: 20px;">
-                        <div class="control-group">
-                            <label>운영할 타이머 개수 (1~10)</label>
-                            <span id="session-count-value">${sessionCount}</span>
-                            <input type="range" id="session-count-slider" min="1" max="10" value="${sessionCount}">
-                        </div>
-
-                        <div class="control-group">
-                            <label>알람 볼륨</label>
-                            <span id="alarm-volume-value">${currentVolume}%</span>
-                            <input type="range" id="alarm-volume-slider" min="0" max="100" value="${currentVolume}">
-                        </div>
-                        
-                        <div style="grid-column: 1 / 3;">
-                            <label style="font-size: 0.9rem; color: var(--gray-text);">알람 종류 선택</label>
-                            <div class="alarm-selector">
-                                <button id="alarm-soft" data-profile="soft" ${softSelected}>작은 소리 🔈</button>
-                                <button id="alarm-medium" data-profile="medium" ${mediumSelected}>중간 소리 🔔</button>
-                                <button id="alarm-loud" data-profile="loud" ${loudSelected}>큰 소리 🔊</button>
-                            </div>
-                        </div>
-                        
-                        <div class="toggle-wrapper" style="margin-top: 5px; padding-top: 10px; border-top: 1px solid var(--input-border);">
-                            <span>다크 모드</span>
-                            <input type="checkbox" id="dark-mode-toggle" ${isDarkMode ? 'checked' : ''}>
-                        </div>
-                    </div>
-                    
-                    <div class="action-buttons full-width" style="margin-top: auto;">
-                        <button id="alarm-test" style="background-color: var(--setting-color); color: white;" class="full-width">테스트 알람 재생</button>
-                    </div>
-                </div>
-            `;
-        };
-
-        function attachGlobalListeners() {
-            const countSlider = document.getElementById('session-count-slider');
-            const countValue = document.getElementById('session-count-value');
-
-            if (!countSlider) return; 
-
-            countSlider.oninput = (e) => {
-                countValue.innerText = e.target.value; 
-            };
-            
-            countSlider.onchange = (e) => {
-                sessionCount = parseInt(e.target.value);
-                saveGlobalSettings();
-                createSessions(); 
-            }
-
-            const volumeSlider = document.getElementById('alarm-volume-slider');
-            const volumeValue = document.getElementById('alarm-volume-value');
-            
-            volumeSlider.oninput = (e) => {
-                globalVolume = parseInt(e.target.value) / 100;
-                volumeValue.innerText = `${e.target.value}%`;
-                saveGlobalSettings();
-            };
-            
-            document.querySelectorAll('#settings-card .alarm-selector button[data-profile]').forEach(button => {
-                button.onclick = (e) => {
-                    alarmProfile = e.target.dataset.profile;
-                    document.querySelectorAll('#settings-card .alarm-selector button').forEach(btn => btn.classList.remove('selected'));
-                    e.target.classList.add('selected');
-                    saveGlobalSettings();
-                };
-            });
-
-            document.getElementById('alarm-test').onclick = playAlarm;
-            
-            // 다크 모드 토글 이벤트 리스너 복원
-            document.getElementById('dark-mode-toggle').addEventListener('change', (e) => {
-                toggleDarkMode(e.target.checked);
-            });
-            
-            // 설정 카드 메모 4줄에 대한 리스너 추가
-            document.getElementById('setting-note-1').addEventListener('input', (e) => {
-                settingNote1 = e.target.value;
-                saveGlobalSettings();
-            });
-            document.getElementById('setting-note-2').addEventListener('input', (e) => {
-                settingNote2 = e.target.value;
-                saveGlobalSettings();
-            });
-            document.getElementById('setting-note-3').addEventListener('input', (e) => {
-                settingNote3 = e.target.value;
-                saveGlobalSettings();
-            });
-            document.getElementById('setting-note-4').addEventListener('input', (e) => {
-                settingNote4 = e.target.value;
-                saveGlobalSettings();
-            });
-        }
-
-        function createSessions() {
-            activeSessions.forEach(session => {
-                clearInterval(session.timerInterval);
-            });
-            activeSessions = [];
-            const dashboard = document.getElementById('dashboard');
-            dashboard.innerHTML = ''; 
-
-            const loadedSessions = loadSessionData();
-            
-            for(let i=1; i<=sessionCount; i++) {
-                const loadedData = loadedSessions.find(s => s.id === i) || {};
-                const name = defaultNames[i-1] || `세션 ${i}`;
-                
-                const newSession = new PomodoroSession(i, name, loadedData);
-                activeSessions.push(newSession);
-            }
-            
-            dashboard.insertAdjacentHTML('beforeend', getSettingsCardHTML());
-            
-            attachGlobalListeners(); 
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            loadGlobalSettings(); // 1. 페이지 로드 시 전역 설정 및 다크 모드 상태 로드
-            toggleDarkMode(isDarkMode); // 로드된 다크 모드 상태 적용
-            if (audioCtx.state === 'suspended') {
-                const resumeAudio = () => {
-                    audioCtx.resume();
-                    document.body.removeEventListener('touchstart', resumeAudio);
-                    document.body.removeEventListener('mousedown', resumeAudio);
-                };
-                document.body.addEventListener('touchstart', resumeAudio, { once: true });
-                document.body.addEventListener('mousedown', resumeAudio, { once: true });
-            }
-            createSessions(); // 2. 설정에 맞춰 세션 생성 및 데이터 로드
-        });
-
-    </script>
-</body>
-</html>
-
-
+                this.initialTime = this
