@@ -242,11 +242,11 @@
             background: #666;
         }
         input[type="checkbox"]:checked {
-            /* 라이트 모드에서는 기존 setting-color 사용 */
+            /* 라이트 모드 ON 색상 */
             background: var(--setting-color); 
         }
         
-        /* 🔥 수정된 부분: 다크 모드에서 스위치 ON 상태일 때 명확한 focus-color 적용 */
+        /* 다크 모드 ON 색상: Focus color로 대비를 강화 */
         body.dark-mode input[type="checkbox"]:checked {
             background: var(--focus-color); 
         }
@@ -722,8 +722,7 @@
                     </div>
                     
                     <div class="status-badge" style="color: var(--setting-color);">대시보드 관리</div>
-                    <div class="cycle-visuals" style="margin-bottom: 20px;"></div>
-
+                    
                     <div class="timer-display" style="font-size: 2rem; color: var(--setting-color); margin-top: 10px;">⚙️</div>
                     
                     <div class="progress-container">
