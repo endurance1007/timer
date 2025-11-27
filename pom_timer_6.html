@@ -76,7 +76,6 @@
             flex-direction: column;
             border-top: 6px solid var(--focus-color);
             position: relative;
-            /* 기존 min-height 제거: 버튼과 설정이 타이머 아래로 자연스럽게 배치되도록 함 */
         }
 
         .session-name { 
@@ -227,6 +226,7 @@
             border-radius: 10px;
             background: #ccc;
             transition: background 0.3s;
+            /* 토글 버튼과 레이블이 동일 선상에 있어야 + 선택자가 작동하므로 순서 조정 필요 */
         }
         body.dark-mode input[type="checkbox"] {
             background: #666;
@@ -248,13 +248,23 @@
         input[type="checkbox"]:checked::after {
             transform: translateX(16px);
         }
-
+        
+        /* 🔥 NEW: 토글이 켜졌을 때 레이블 텍스트 강조 (다크모드/자동 진행 모두 적용) */
+        .toggle-wrapper input[type="checkbox"]:checked + span {
+            color: var(--focus-color); 
+            font-weight: bold;
+        }
+        /* 다크모드일 때 레이블 색상 조정 */
+        body.dark-mode .toggle-wrapper input[type="checkbox"]:checked + span {
+            color: var(--text-color); /* 다크모드에서 흰색 텍스트로 강조 */
+        }
+        
         /* --- Buttons --- */
         .action-buttons { 
             display: grid; 
             grid-template-columns: 1fr 1fr; 
             gap: 8px; 
-            margin-top: 20px; /* 자연스러운 간격 추가 */
+            margin-top: 20px; 
         }
         .full-width { grid-column: span 2; }
         button { padding: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: opacity 0.2s; font-size: 0.9rem; }
@@ -480,8 +490,8 @@
                                 <input type="range" id="input-cycle-${this.id}" min="1" max="20" value="${this.totalCycles}">
                             </div>
                             <div class="toggle-wrapper">
-                                <span>자동 진행</span>
                                 <input type="checkbox" id="check-auto-${this.id}" ${this.autoAdvance ? 'checked' : ''}>
+                                <span>자동 진행</span> 
                             </div>
                         </div>
                     </div>
@@ -708,10 +718,10 @@
                         <input type="text" class="session-note" id="setting-note-4" placeholder="" value="${settingNote4}">
                     </div>
                     
-                    <div class="status-badge" style="color: var(--setting-color);">오늘도 화이팅!!</div>
+                    <div class="status-badge" style="color: var(--setting-color);">!!오늘도 즐겁게!!</div>
                     <div class="cycle-visuals" style="margin-bottom: 20px;"></div>
 
-                    <div class="timer-display" style="font-size: 2rem; color: var(--setting-color); margin-top: 1px;">⚙️</div>
+                    <div class="timer-display" style="font-size: 2rem; color: var(--setting-color); margin-top: 10px;">⚙️</div>
                     
                     <div class="progress-container">
                         <div class="progress-bar-bg">
@@ -742,8 +752,8 @@
                         </div>
                         
                         <div class="toggle-wrapper" style="margin-top: 5px; padding-top: 10px; border-top: 1px solid var(--input-border);">
-                            <span>다크 모드</span>
                             <input type="checkbox" id="dark-mode-toggle" ${isDarkMode ? 'checked' : ''}>
+                            <span>다크 모드</span>
                         </div>
                     </div>
                     
@@ -853,4 +863,3 @@
     </script>
 </body>
 </html>
-
