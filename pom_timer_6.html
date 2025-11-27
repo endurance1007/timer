@@ -331,6 +331,7 @@
 
     <script>
         // --- Global State & Configuration ---
+        // 오디오 컨텍스트는 처음에 'suspended' 상태일 수 있음.
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let activeSessions = [];
         let globalVolume = 0.5;
@@ -418,6 +419,17 @@
         // ===================================
         // 🔊 ALARM & DARK MODE & CLICK FUNCTIONS
         // ===================================
+        
+        /**
+         * 오디오 컨텍스트가 정지 상태일 경우, 사용자 상호작용으로 재개합니다.
+         */
+        function resumeAudioContext() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume().catch(e => {
+                    console.warn("AudioContext resume failed:", e);
+                });
+            }
+        }
 
         /**
          * 알람 소리를 재생하는 내부 헬퍼 함수
@@ -428,14 +440,19 @@
          * @param {number} vol - 기본 볼륨 (0.0 ~ 1.0)
          */
         const createBeep = (startTime, duration, freq, type, vol) => {
+            if (audioCtx.state !== 'running') {
+                console.warn("AudioContext is not running. Cannot play beep.");
+                return;
+            }
+            
             const oscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
 
             oscillator.type = type;
             oscillator.frequency.value = freq;
-            const effectiveVolume = Math.max(0.01, vol * globalVolume);
+            const effectiveVolume = Math.max(0.0001, vol * globalVolume); // 최소 볼륨 설정
             gainNode.gain.setValueAtTime(effectiveVolume, startTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + duration); // 소리 부드럽게 줄이기
 
             oscillator.connect(gainNode);
             gainNode.connect(audioCtx.destination);
@@ -447,18 +464,18 @@
          * 슬라이더 조작 시 아주 짧고 미세한 클릭음을 재생합니다. (저주파수 피드백)
          */
         function playClickSound() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
+            resumeAudioContext(); 
             const now = audioCtx.currentTime;
             
-            // 미세한 클릭음: 200Hz, 0.05초, 볼륨 0.05 (매우 작게, UI 피드백용)
-            createBeep(now, 0.05, 200, 'sine', 0.05); 
+            // 미세한 클릭음: 200Hz, 0.03초, 볼륨 0.05 (매우 작게, UI 피드백용)
+            createBeep(now, 0.03, 200, 'sine', 0.05); 
         }
         
         /**
          * 버튼 클릭 시 피드백으로 Soft 알람을 재생합니다.
          */
         function playSoftAlarm() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
+            resumeAudioContext();
             const now = audioCtx.currentTime;
             // Soft 알람 프로파일 설정: 440Hz, 0.2초, 볼륨 0.2 (사용자 요청에 따른 버튼 피드백용)
             createBeep(now, 0.2, 440, 'sine', 0.2); 
@@ -468,7 +485,7 @@
          * 메인 알람을 재생합니다. (집중/휴식 완료 시, 테스트 버튼 클릭 시)
          */
         function playAlarm() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
+            resumeAudioContext();
             const now = audioCtx.currentTime;
             
             switch(alarmProfile) {
@@ -636,6 +653,7 @@
             }
             
             attachEvents() {
+                const playClick = () => playClickSound(); // 슬라이더 조작용
                 const playSoft = () => playSoftAlarm(); // 버튼 클릭용
 
                 // Note and Name Inputs
@@ -652,7 +670,7 @@
                 // 집중 시간
                 const inputFocus = document.getElementById(`input-focus-${this.id}`);
                 inputFocus.addEventListener('input', (e) => {
-                    playClickSound(); // 슬라이더 조작 시 클릭음
+                    playClick(); // 슬라이더 조작 시 클릭음
                     this.focusTime = parseInt(e.target.value);
                     document.getElementById(`val-focus-${this.id}`).innerText = this.focusTime;
                     if (this.state === 'stopped' && this.mode === 'focus') this.resetTimerDisplay();
@@ -665,7 +683,7 @@
                 // 휴식 시간
                 const inputBreak = document.getElementById(`input-break-${this.id}`);
                 inputBreak.addEventListener('input', (e) => {
-                    playClickSound(); // 슬라이더 조작 시 클릭음
+                    playClick(); // 슬라이더 조작 시 클릭음
                     this.breakTime = parseInt(e.target.value);
                     document.getElementById(`val-break-${this.id}`).innerText = this.breakTime;
                     if (this.state === 'stopped' && this.mode === 'break') this.resetTimerDisplay();
@@ -678,7 +696,7 @@
                 // 총 사이클 수
                 const inputCycle = document.getElementById(`input-cycle-${this.id}`);
                 inputCycle.addEventListener('input', (e) => {
-                    playClickSound(); // 슬라이더 조작 시 클릭음
+                    playClick(); // 슬라이더 조작 시 클릭음
                     this.totalCycles = parseInt(e.target.value);
                     document.getElementById(`val-cycle-${this.id}`).innerText = this.totalCycles;
                     this.renderCycles();
@@ -691,7 +709,7 @@
                 // Checkbox -> playClickSound
                 const checkAuto = document.getElementById(`check-auto-${this.id}`);
                 checkAuto.addEventListener('change', (e) => {
-                    playClickSound(); // 체크박스 조작 시 클릭음
+                    playClick(); // 체크박스 조작 시 클릭음
                     this.autoAdvance = e.target.checked;
                     saveSessionData();
                 });
@@ -777,7 +795,7 @@
 
             start() {
                 if (this.state === 'running') return;
-                if (audioCtx.state === 'suspended') audioCtx.resume();
+                resumeAudioContext();
                 this.state = 'running';
                 document.getElementById(`btn-start-${this.id}`).style.display = 'none';
                 document.getElementById(`btn-pause-${this.id}`).style.display = 'block';
@@ -1069,16 +1087,10 @@
                 document.title = mainTitle; 
             });
             document.title = mainTitle; 
+            
+            // 초기 AudioContext 활성화 시도 (사용자 제스처가 필요하므로, 이후 상호작용 함수에서 보완)
+            resumeAudioContext();
 
-            if (audioCtx.state === 'suspended') {
-                const resumeAudio = () => {
-                    audioCtx.resume();
-                    document.body.removeEventListener('touchstart', resumeAudio);
-                    document.body.removeEventListener('mousedown', resumeAudio);
-                };
-                document.body.addEventListener('touchstart', resumeAudio, { once: true });
-                document.body.addEventListener('mousedown', resumeAudio, { once: true });
-            }
             createSessions(); 
         });
 
