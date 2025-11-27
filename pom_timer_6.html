@@ -107,13 +107,15 @@
             padding: 15px;
             background: var(--control-bg); 
             border-radius: 8px; 
-            margin-bottom: 10px; /* 액션 버튼과의 간격 */
+            /* margin-bottom: 10px; */ /* 메모 밑의 간격은 제거됨 */
         }
         .notes-wrapper .session-note {
              margin-bottom: 5px; /* 내부 간격 줄임 */
+             border-bottom: 1px solid var(--input-border);
         }
         .notes-wrapper .session-note:last-child {
              margin-bottom: 0; 
+             border-bottom: none; /* 마지막 메모 입력란은 선 없음 */
         }
 
         /* --- Cycle Visuals --- */
@@ -759,15 +761,15 @@
                         </div>
                     </div>
 
+                    <div class="action-buttons full-width" style="margin-top: 0px; margin-bottom: 20px;">
+                        <button id="alarm-test" style="background-color: var(--setting-color); color: white;" class="full-width">테스트 알람 재생</button>
+                    </div>
+
                     <div class="notes-wrapper">
                         <input type="text" class="session-note" id="setting-note-1" placeholder="메모 1" value="${settingNote1}">
                         <input type="text" class="session-note" id="setting-note-2" placeholder="메모 2" value="${settingNote2}">
                         <input type="text" class="session-note" id="setting-note-3" placeholder="메모 3" value="${settingNote3}">
                         <input type="text" class="session-note" id="setting-note-4" placeholder="메모 4" value="${settingNote4}">
-                    </div>
-                    
-                    <div class="action-buttons full-width" style="margin-top: 20px;">
-                        <button id="alarm-test" style="background-color: var(--setting-color); color: white;" class="full-width">테스트 알람 재생</button>
                     </div>
                 </div>
             `;
