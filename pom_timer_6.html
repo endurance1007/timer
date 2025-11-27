@@ -406,29 +406,61 @@
         }
 
         // ===================================
-        // 🔊 ALARM & DARK MODE FUNCTIONS
+        // 🔊 ALARM & DARK MODE & CLICK FUNCTIONS
         // ===================================
+
+        /**
+         * 알람 소리를 재생하는 내부 헬퍼 함수
+         * @param {number} startTime - 재생 시작 시간
+         * @param {number} duration - 소리 길이
+         * @param {number} freq - 주파수
+         * @param {string} type - 파형 ('sine', 'square', 'sawtooth', 'triangle')
+         * @param {number} vol - 기본 볼륨 (0.0 ~ 1.0)
+         */
+        const createBeep = (startTime, duration, freq, type, vol) => {
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.type = type;
+            oscillator.frequency.value = freq;
+            const effectiveVolume = Math.max(0.01, vol * globalVolume);
+            gainNode.gain.setValueAtTime(effectiveVolume, startTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start(startTime);
+            oscillator.stop(startTime + duration);
+        };
         
+        /**
+         * 슬라이더 조작 시 아주 짧고 미세한 클릭음을 재생합니다. (저주파수 피드백)
+         */
+        function playClickSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const now = audioCtx.currentTime;
+            
+            // 미세한 클릭음: 200Hz, 0.05초, 볼륨 0.05 (매우 작게)
+            createBeep(now, 0.05, 200, 'sine', 0.05); 
+        }
+        
+        /**
+         * 버튼 클릭 시 피드백으로 Soft 알람을 재생합니다.
+         */
+        function playSoftAlarm() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const now = audioCtx.currentTime;
+            // Soft 알람 프로파일 설정: 440Hz, 0.2초, 볼륨 0.2 (Soft 알람의 정의)
+            createBeep(now, 0.2, 440, 'sine', 0.2); 
+        }
+
+        /**
+         * 메인 알람을 재생합니다.
+         */
         function playAlarm() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const now = audioCtx.currentTime;
             
-            const createBeep = (startTime, duration, freq, type, vol) => {
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-
-                oscillator.type = type;
-                oscillator.frequency.value = freq;
-                const effectiveVolume = Math.max(0.01, vol * globalVolume);
-                gainNode.gain.setValueAtTime(effectiveVolume, startTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                oscillator.start(startTime);
-                oscillator.stop(startTime + duration);
-            };
-
             switch(alarmProfile) {
                 case 'soft':
                     createBeep(now, 0.2, 440, 'sine', 0.2); 
@@ -594,7 +626,14 @@
             }
             
             attachEvents() {
+                const playClick = () => playClickSound(); // 슬라이더 조작용
+                const playSoft = () => playSoftAlarm(); // 버튼 클릭용
+
                 const updateAndSave = (callback) => (e) => {
+                    // 슬라이더 및 체크박스 조작 시 클릭 사운드 재생
+                    if (e.target.type === 'range' || e.target.type === 'checkbox') {
+                         playClick();
+                    }
                     callback(e);
                     if (this.state === 'stopped' || e.type === 'change' || e.type === 'input') { 
                         saveSessionData();
@@ -609,6 +648,7 @@
                     this.name = e.target.value;
                 }));
                 
+                // Range Inputs (Slider) -> playClickSound
                 document.getElementById(`input-focus-${this.id}`).addEventListener('input', updateAndSave((e) => {
                     this.focusTime = parseInt(e.target.value);
                     document.getElementById(`val-focus-${this.id}`).innerText = this.focusTime;
@@ -624,14 +664,16 @@
                     document.getElementById(`val-cycle-${this.id}`).innerText = this.totalCycles;
                     this.renderCycles();
                 }));
+                // Checkbox -> playClickSound
                 document.getElementById(`check-auto-${this.id}`).addEventListener('change', updateAndSave((e) => {
                     this.autoAdvance = e.target.checked;
                 }));
 
-                document.getElementById(`btn-start-${this.id}`).addEventListener('click', () => this.start());
-                document.getElementById(`btn-pause-${this.id}`).addEventListener('click', () => this.pause());
-                document.getElementById(`btn-reset-${this.id}`).addEventListener('click', () => this.resetTimer());
-                document.getElementById(`btn-pass-${this.id}`).addEventListener('click', () => this.skipPhase());
+                // Action Buttons -> playSoftAlarm
+                document.getElementById(`btn-start-${this.id}`).addEventListener('click', () => { playSoft(); this.start(); });
+                document.getElementById(`btn-pause-${this.id}`).addEventListener('click', () => { playSoft(); this.pause(); });
+                document.getElementById(`btn-reset-${this.id}`).addEventListener('click', () => { playSoft(); this.resetTimer(); });
+                document.getElementById(`btn-pass-${this.id}`).addEventListener('click', () => { playSoft(); this.skipPhase(); });
             }
 
             renderCycles() {
@@ -877,7 +919,9 @@
 
             if (!countSlider) return; 
 
+            // Slider: playClickSound
             countSlider.oninput = (e) => {
+                playClickSound(); 
                 countValue.innerText = e.target.value; 
             };
             
@@ -890,14 +934,18 @@
             const volumeSlider = document.getElementById('alarm-volume-slider');
             const volumeValue = document.getElementById('alarm-volume-value');
             
+            // Slider: playClickSound
             volumeSlider.oninput = (e) => {
+                playClickSound();
                 globalVolume = parseInt(e.target.value) / 100;
                 volumeValue.innerText = `${e.target.value}%`;
                 saveGlobalSettings();
             };
             
+            // Buttons: playSoftAlarm
             document.querySelectorAll('#settings-card .alarm-selector button[data-profile]').forEach(button => {
                 button.onclick = (e) => {
+                    playSoftAlarm(); // Soft Alarm Feedback
                     alarmProfile = e.target.dataset.profile;
                     document.querySelectorAll('#settings-card .alarm-selector button').forEach(btn => btn.classList.remove('selected'));
                     e.target.classList.add('selected');
@@ -905,12 +953,15 @@
                 };
             });
 
-            document.getElementById('alarm-test').onclick = playAlarm;
+            document.getElementById('alarm-test').onclick = playAlarm; // Test alarm uses the main alarm sound
             
+            // Checkbox: playClickSound
             document.getElementById('dark-mode-toggle').addEventListener('change', (e) => {
+                playClickSound(); // Click Sound Feedback
                 toggleDarkMode(e.target.checked);
             });
             
+            // Note inputs (no sound needed)
             document.getElementById('setting-note-1').addEventListener('input', (e) => {
                 settingNote1 = e.target.value;
                 saveGlobalSettings();
@@ -982,4 +1033,3 @@
     </script>
 </body>
 </html>
-
