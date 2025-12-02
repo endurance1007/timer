@@ -467,11 +467,12 @@
          * 슬라이더 조작 시 아주 짧고 미세한 클릭음을 재생합니다. (저주파수 피드백)
          */
         function playClickSound() {
-            resumeAudioContext(); // ⭐ 오디오 컨텍스트 재개 시도
+            resumeAudioContext(); 
             const now = audioCtx.currentTime;
             
-            // 미세한 클릭음: 200Hz, 0.03초, 볼륨 0.05 (매우 작게, UI 피드백용)
-            createBeep(now, 0.03, 200, 'sine', 0.05); 
+            // ⭐ 수정된 부분: 주파수를 200Hz에서 440Hz로, 볼륨을 0.05에서 0.15로 상향
+            // 미세한 클릭음: 440Hz, 0.03초, 볼륨 0.15 
+            createBeep(now, 0.03, 440, 'sine', 0.15); 
         }
         
         /**
